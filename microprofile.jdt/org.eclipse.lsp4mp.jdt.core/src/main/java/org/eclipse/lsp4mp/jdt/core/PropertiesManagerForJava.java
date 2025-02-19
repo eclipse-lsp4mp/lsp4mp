@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019 Red Hat Inc. and others.
+* Copyright (c) 2019, 2025 Red Hat Inc. and others.
 *
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License v. 2.0 which is available at
@@ -466,7 +466,7 @@ public class PropertiesManagerForJava {
 				if (visitor.isInAnnotations()) {
 					return JavaCursorContextKind.IN_CLASS_ANNOTATIONS;
 				}
-				return JavaCursorContextKind.BEFORE_CLASS;
+				return JavaCursorContextKind.BEFORE_TOP_LEVEL_CLASS;
 			}
 			default:
 				return JavaCursorContextKind.NONE;
@@ -482,7 +482,7 @@ public class PropertiesManagerForJava {
 		case ASTNode.ENUM_DECLARATION:
 		case ASTNode.RECORD_DECLARATION:
 			return visitor.isInAnnotations() ? JavaCursorContextKind.IN_CLASS_ANNOTATIONS
-					: JavaCursorContextKind.BEFORE_CLASS;
+					: JavaCursorContextKind.BEFORE_INNER_CLASS;
 		case ASTNode.ANNOTATION_TYPE_MEMBER_DECLARATION:
 		case ASTNode.METHOD_DECLARATION:
 			return visitor.isInAnnotations() ? JavaCursorContextKind.IN_METHOD_ANNOTATIONS

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2023 Red Hat Inc. and others.
+* Copyright (c) 2023, 2025 Red Hat Inc. and others.
 *
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License v. 2.0 which is available at
@@ -29,20 +29,8 @@ public enum JavaCursorContextKind {
 	IN_EMPTY_FILE(1),
 
 	/**
-	 * The cursor is before a type declaration body, either at the root of a file or
-	 * within another class. The cursor is before any annotations on the type.
-	 *
-	 * eg.
-	 * <code>
-	 * <br />
-	 * package org.acme;<br />
-	 * <br />
-	 * |<br />
-	 * &commat;Inject<br />
-	 * public class MyClass {<br />
-	 * <br />
-	 * }<br />
-	 * </code>
+	 * The cursor is before a type declaration body within another class.
+	 * The cursor is before any annotations on the type.
 	 *
 	 * eg.
 	 * <code>
@@ -61,7 +49,7 @@ public enum JavaCursorContextKind {
 	 * }<br />
 	 * </code>
 	 */
-	BEFORE_CLASS(2),
+	BEFORE_INNER_CLASS(2),
 
 	/**
 	 * The cursor is in a type declaration body, and the next declaration in the
@@ -194,6 +182,25 @@ public enum JavaCursorContextKind {
 	 * </code>
 	 */
 	IN_CLASS(8),
+
+
+	/**
+	 * The cursor is before a type declaration body at the root of a file.
+	 * The cursor is before any annotations on the type.
+	 *
+	 * eg.
+	 * <code>
+	 * <br />
+	 * package org.acme;<br />
+	 * <br />
+	 * |<br />
+	 * &commat;Inject<br />
+	 * public class MyClass {<br />
+	 * <br />
+	 * }<br />
+	 * </code>
+	 */
+	BEFORE_TOP_LEVEL_CLASS(9),
 
 	/**
 	 * None of the above context apply.

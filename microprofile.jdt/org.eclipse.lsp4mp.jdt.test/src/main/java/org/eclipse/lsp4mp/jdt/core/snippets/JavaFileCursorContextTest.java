@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2023 Red Hat Inc. and others.
+* Copyright (c) 2023, 2025 Red Hat Inc. and others.
 *
 * This program and the accompanying materials are made available under the
 * terms of the Eclipse Public License v. 2.0 which is available at
@@ -319,7 +319,7 @@ public class JavaFileCursorContextTest extends BasePropertiesManagerTest {
 		// static class MyNestedNestedClass {
 		// ...
 		MicroProfileJavaCompletionParams params = new MicroProfileJavaCompletionParams(javaFileUri, new Position(4, 0));
-		assertEquals(JavaCursorContextKind.BEFORE_CLASS,
+		assertEquals(JavaCursorContextKind.BEFORE_INNER_CLASS,
 				PropertiesManagerForJava.getInstance().javaCursorContext(params, JDT_UTILS, MONITOR).getKind());
 
 		// ...
@@ -330,7 +330,7 @@ public class JavaFileCursorContextTest extends BasePropertiesManagerTest {
 		// static class MyNestedNestedClass {
 		// ...
 		params = new MicroProfileJavaCompletionParams(javaFileUri, new Position(5, 0));
-		assertEquals(JavaCursorContextKind.BEFORE_CLASS,
+		assertEquals(JavaCursorContextKind.BEFORE_INNER_CLASS,
 				PropertiesManagerForJava.getInstance().javaCursorContext(params, JDT_UTILS, MONITOR).getKind());
 
 		// ...
@@ -350,7 +350,7 @@ public class JavaFileCursorContextTest extends BasePropertiesManagerTest {
 		// public class MyNestedClass {
 		// ...
 		params = new MicroProfileJavaCompletionParams(javaFileUri, new Position(1, 0));
-		assertEquals(JavaCursorContextKind.BEFORE_CLASS,
+		assertEquals(JavaCursorContextKind.BEFORE_TOP_LEVEL_CLASS,
 				PropertiesManagerForJava.getInstance().javaCursorContext(params, JDT_UTILS, MONITOR).getKind());
 
 		// ...
