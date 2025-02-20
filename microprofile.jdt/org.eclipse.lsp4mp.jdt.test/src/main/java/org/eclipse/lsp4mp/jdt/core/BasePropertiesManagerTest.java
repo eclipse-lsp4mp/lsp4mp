@@ -174,7 +174,10 @@ public class BasePropertiesManagerTest {
 		IProgressMonitor monitor = new NullProgressMonitor();
 		waitForBackgroundJobs(monitor);
 		org.eclipse.jdt.ls.core.internal.JobHelpers.waitUntilIndexesReady();
-
+		Map<String, Object> extendedClientCapabilities = new HashMap<>();
+		extendedClientCapabilities.put("classFileContentsSupport", "true");
+		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(), extendedClientCapabilities);
+		
 		// Collect Quarkus properties from the "hibernate-orm-resteasy" project. It
 		// should collect Quarkus properties from given JAR:
 
