@@ -36,18 +36,18 @@ public class ValidatorDelayer<T extends TextDocument> {
 
 	private final Map<String, Future<?>> pendingValidationRequests;
 
-	private final long validationDelayMs;
+	private final long validationDelayMillis;
 
 	public ValidatorDelayer(Consumer<T> validator) {
 		this(Executors.newScheduledThreadPool(2), validator, DEFAULT_VALIDATION_DELAY_MS);
 	}
 
 	public ValidatorDelayer(ScheduledExecutorService executorService, Consumer<T> validator,
-			long validationDelayMs) {
+			long validationDelayMillis) {
 		this.executorService = executorService;
 		this.validator = validator;
 		this.pendingValidationRequests = new HashMap<>();
-		this.validationDelayMs = validationDelayMs;
+		this.validationDelayMillis = validationDelayMillis;
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class ValidatorDelayer<T extends TextDocument> {
 			if (version == document.getVersion()) {
 				validator.accept(document);
 			}
-		}, validationDelayMs, TimeUnit.MILLISECONDS);
+		}, validationDelayMillis, TimeUnit.MILLISECONDS);
 		synchronized (pendingValidationRequests) {
 			pendingValidationRequests.put(uri, request);
 		}
