@@ -16,7 +16,7 @@ package org.eclipse.lsp4mp.ls.api;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.WorkspaceSymbol;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 
 /**
@@ -27,6 +27,6 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 public interface MicroProfileJavaWorkspaceSymbolsProvider {
 
 	@JsonRequest("microprofile/java/workspaceSymbols")
-	CompletableFuture<List<SymbolInformation>> getJavaWorkspaceSymbols(String projectUri);
+	CompletableFuture<List<WorkspaceSymbol>> getJavaWorkspaceSymbols(String projectUri);
 
 }

@@ -17,15 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.CodeAction;
-import org.eclipse.lsp4j.CodeLens;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.MessageActionItem;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.ShowMessageRequestParams;
-import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4mp.commons.JavaCursorContextResult;
 import org.eclipse.lsp4mp.commons.JavaFileInfo;
 import org.eclipse.lsp4mp.commons.MicroProfileDefinition;
@@ -303,7 +295,7 @@ public class MockMicroProfileLanguageClient implements MicroProfileLanguageClien
 	}
 
 	@Override
-	public CompletableFuture<List<SymbolInformation>> getJavaWorkspaceSymbols(String projectUri) {
+	public CompletableFuture<List<WorkspaceSymbol>> getJavaWorkspaceSymbols(String projectUri) {
 		return CompletableFuture.completedFuture(null);
 	}
 
