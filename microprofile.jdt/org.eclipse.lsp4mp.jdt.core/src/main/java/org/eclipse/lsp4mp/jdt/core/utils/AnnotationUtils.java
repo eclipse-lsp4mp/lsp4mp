@@ -265,6 +265,9 @@ public class AnnotationUtils {
 	 */
 	public static boolean isMatchAnnotation(Annotation annotation, String annotationName) {
 		IAnnotationBinding binding = annotation.resolveAnnotationBinding();
+		if (binding == null) {
+			return false;
+		}
 		ITypeBinding annotationType = binding.getAnnotationType();
 		if (annotationType == null) {
 			return false;
