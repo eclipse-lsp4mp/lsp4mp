@@ -316,6 +316,9 @@ public class PropertiesManager {
 	 */
 	private IJavaProject getJavaProject(IJavaProject javaProject, boolean excludeTestCode,
 			List<MicroProfilePropertiesScope> scopes, SubMonitor monitor) throws JavaModelException {
+		if (scopes.indexOf(MicroProfilePropertiesScope.dependencies) == -1) {
+			return javaProject;
+		}
 		if (javaProject instanceof FakeJavaProject) {
 			// The java project is already resolved
 			return javaProject;
