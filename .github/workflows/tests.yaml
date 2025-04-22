@@ -1,0 +1,29 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  microprofile-jdt-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Set up Eclipse Temurin JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Build and test lsp4mp JDT component
+        working-directory: microprofile.jdt
+        run: ./mvnw -B -U clean verify
+  microprofile-ls-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Set up Eclipse Temurin JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Build and test lsp4mp language server component
+        working-directory: microprofile.ls/org.eclipse.lsp4mp.ls
+        run: ./mvnw -B -U clean verify
