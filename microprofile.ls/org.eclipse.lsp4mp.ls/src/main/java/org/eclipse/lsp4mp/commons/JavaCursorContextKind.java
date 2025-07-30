@@ -218,7 +218,7 @@ public enum JavaCursorContextKind {
 	 * }<br />
 	 * </code>
 	 */
-	NONE(2000);
+	NONE(10);
 
 	private final int value;
 
@@ -232,12 +232,7 @@ public enum JavaCursorContextKind {
 
 	public static JavaCursorContextKind forValue(int value) {
 		JavaCursorContextKind[] allValues = JavaCursorContextKind.values();
-		
-        // Root cause and fix for JavaCursorContextKind IllegalArgumentException issue #520 when value passed is 2000
-        if (value == NONE.getValue()) {
-            return NONE;
-        }
-        if (value < 1 || value > allValues.length - 1)
+        if (value < 1 || value > allValues.length)
             throw new IllegalArgumentException("Illegal enum value: " + value);
         return allValues[value - 1];
 	}
