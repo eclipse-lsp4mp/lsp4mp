@@ -218,7 +218,7 @@ public enum JavaCursorContextKind {
 	 * }<br />
 	 * </code>
 	 */
-	NONE(2000);
+	NONE(10);
 
 	private final int value;
 
