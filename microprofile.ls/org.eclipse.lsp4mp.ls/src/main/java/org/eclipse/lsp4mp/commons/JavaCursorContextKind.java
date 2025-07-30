@@ -238,8 +238,8 @@ public enum JavaCursorContextKind {
             return NONE;
         }
         if (value < 1 || value > allValues.length - 1)
-			throw new IllegalArgumentException("Illegal enum value: " + value);
-		return allValues[value - 1];
+            throw new IllegalArgumentException("Illegal enum value: " + value);
+        return allValues[value - 1];
 	}
 
 }
