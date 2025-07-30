@@ -230,11 +230,11 @@ public enum JavaCursorContextKind {
 		return value;
 	}
 
-	public static JavaCursorContextKind forValue(int value) {
-		JavaCursorContextKind[] allValues = JavaCursorContextKind.values();
+    public static JavaCursorContextKind forValue(int value) {
+        JavaCursorContextKind[] allValues = JavaCursorContextKind.values();
         if (value < 1 || value > allValues.length)
             throw new IllegalArgumentException("Illegal enum value: " + value);
         return allValues[value - 1];
-	}
+    }
 
 }
