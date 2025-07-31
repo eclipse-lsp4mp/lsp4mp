@@ -64,7 +64,6 @@ import org.eclipse.lsp4mp.ls.commons.BadLocationException;
 import org.eclipse.lsp4mp.ls.commons.TextDocument;
 import org.eclipse.lsp4mp.ls.commons.ValidatorDelayer;
 import org.eclipse.lsp4mp.ls.commons.client.CommandKind;
-import org.eclipse.lsp4mp.ls.commons.client.ExtendedCompletionCapabilities;
 import org.eclipse.lsp4mp.ls.java.JavaTextDocuments.JavaTextDocument;
 import org.eclipse.lsp4mp.ls.properties.IPropertiesModelProvider;
 import org.eclipse.lsp4mp.model.Node;
@@ -93,7 +92,8 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 	private ValidatorDelayer<JavaTextDocument> validatorDelayer;
 
 	public JavaFileTextDocumentService(MicroProfileLanguageServer microprofileLanguageServer,
-			IPropertiesModelProvider propertiesModelProvider, SharedSettings sharedSettings, JavaTextDocuments javaTextDocuments) {
+			IPropertiesModelProvider propertiesModelProvider, SharedSettings sharedSettings,
+			JavaTextDocuments javaTextDocuments) {
 		super(microprofileLanguageServer, sharedSettings);
 		this.propertiesModelProvider = propertiesModelProvider;
 		this.documents = javaTextDocuments;
@@ -125,8 +125,17 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 
 	@Override
 	public void didSave(DidSaveTextDocumentParams params) {
+		// Do nothing..
+		
+		// Since the beginning of the MP LS project,
+		// saving a Java file triggers validation for all open Java files,
+		// which can negatively impact performance.
+		// As there's no comment explaining the reason for this behavior,
+		// we are disabling this feature.
+
 		// validate all opened java files which belong to a MicroProfile project
-		triggerValidationForAll(null);
+		// triggerValidationForAll(null);
+
 	}
 
 	// ------------------------------ Completion ------------------------------
@@ -167,8 +176,9 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 				JavaCursorContextResult cursorContext = completionResult.getCursorContext();
 
 				// calculate the snippet completion items based on the context
-				List<CompletionItem> snippetCompletionItems = documents.getSnippetRegistry().getCompletionItems(document, finalizedCompletionOffset,
-						canSupportMarkdown, snippetsSupported, (context, model) -> {
+				List<CompletionItem> snippetCompletionItems = documents.getSnippetRegistry().getCompletionItems(
+						document, finalizedCompletionOffset, canSupportMarkdown, snippetsSupported,
+						(context, model) -> {
 							if (context != null && context instanceof SnippetContextForJava) {
 								return ((SnippetContextForJava) context)
 										.isMatch(new JavaSnippetCompletionContext(projectInfo, cursorContext));
@@ -339,7 +349,7 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 	/**
 	 * Validate the given opened Java file.
 	 *
-	 * @param document                  the opened Java file.
+	 * @param document the opened Java file.
 	 */
 	private void triggerValidationFor(JavaTextDocument document) {
 		document.executeIfInMicroProfileProject((projectinfo, cancelChecker) -> {
