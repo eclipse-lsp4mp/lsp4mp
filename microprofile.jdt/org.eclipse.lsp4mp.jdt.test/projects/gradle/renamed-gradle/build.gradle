@@ -9,7 +9,6 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.quarkus:quarkus-resteasy'
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-resteasy'
 
