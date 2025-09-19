@@ -4,13 +4,14 @@ plugins {
 }
 
 repositories {
-     mavenLocal()
-     mavenCentral()
+    mavenLocal()
+    mavenCentral()
 }
 
 dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
-    implementation 'io.quarkus:quarkus-resteasy'
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-arc'
 
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
@@ -20,11 +21,12 @@ group 'org.acme'
 version '1.0.0-SNAPSHOT'
 
 compileJava {
+    options.encoding = 'UTF-8'
     options.compilerArgs << '-parameters'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
