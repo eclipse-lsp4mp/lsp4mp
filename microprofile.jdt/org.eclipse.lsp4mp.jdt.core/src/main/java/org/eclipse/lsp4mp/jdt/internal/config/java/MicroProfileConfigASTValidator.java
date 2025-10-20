@@ -76,6 +76,8 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 
 	private static final String EXPECTED_TYPE_ERROR_MESSAGE = "''{0}'' does not match the expected type of ''{1}''.";
 
+	private static final String EXPECTED_TYPE_UNSUPPORTED_MESSAGE = "Validation of default values for type ''{0}'' is not supported.";
+
 	private static final String EMPTY_LIST_LIKE_WARNING_MESSAGE = "''defaultValue=\"\"'' will behave as if no default value is set, and will not be treated as an empty ''{0}''.";
 
 	private static final String NO_VALUE_ERROR_MESSAGE = "The property ''{0}'' is not assigned a value in any config file, and must be assigned at runtime.";
@@ -180,11 +182,21 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 					String message = MessageFormat.format(EMPTY_LIST_LIKE_WARNING_MESSAGE, fieldBinding.getName());
 					super.addDiagnostic(message, MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE, defaultValueExpr,
 							MicroProfileConfigErrorCode.EMPTY_LIST_NOT_SUPPORTED, DiagnosticSeverity.Warning);
-				}
-				if (!isAssignable(fieldBinding, javaProject, defValue)) {
-					String message = MessageFormat.format(EXPECTED_TYPE_ERROR_MESSAGE, defValue, fieldBinding.getName());
-					super.addDiagnostic(message, MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE, defaultValueExpr,
-							MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE, DiagnosticSeverity.Error);
+				} else {
+					switch (validatePropertyDefaultValue(fieldBinding, javaProject, defValue)) {
+					case INVALID:
+						String message1 = MessageFormat.format(EXPECTED_TYPE_ERROR_MESSAGE, defValue, fieldBinding.getName());
+						super.addDiagnostic(message1, MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE, defaultValueExpr,
+								MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE, DiagnosticSeverity.Error);
+						break;
+					case UNSUPPORTED:
+						String message2 = MessageFormat.format(EXPECTED_TYPE_UNSUPPORTED_MESSAGE, fieldBinding.getName());
+						super.addDiagnostic(message2, MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE, defaultValueExpr,
+								MicroProfileConfigErrorCode.VALIDATION_FOR_TYPE_UNSUPPORTED, DiagnosticSeverity.Information);
+						break;
+					case VALID:
+						break;
+					}
 				}
 			}
 		}
@@ -244,7 +256,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 		return "java.util.List".equals(fqn) || "java.util.Set".equals(fqn);
 	}
 
-	private static boolean isAssignable(ITypeBinding fieldBinding, IJavaProject javaProject, String defValue) {
+	private static ValidationResult validatePropertyDefaultValue(ITypeBinding fieldBinding, IJavaProject javaProject, String defValue) {
 		String fqn = Signature.getTypeErasure(fieldBinding.getQualifiedName());
 		// handle list-like types.
 		// MicroProfile config supports arrays, `java.util.List`, and `java.util.Set` by
@@ -253,7 +265,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 		if (isListLike(fieldBinding)) {
 			if (defValue.isEmpty()) {
 				// A different error is shown in this case
-				return true;
+				return ValidationResult.VALID;
 			}
 			String itemsTypeFqn;
 			if (fieldBinding.isArray()) {
@@ -263,56 +275,68 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 			}
 			for (String listItemValue : ARRAY_SPLITTER.split(defValue, -1)) {
 				listItemValue = listItemValue.replace("\\,", ",");
-				if (!isAssignable(itemsTypeFqn, listItemValue, javaProject)) {
-					return false;
+				ValidationResult r = validateItemValue(itemsTypeFqn, listItemValue, javaProject);
+				if (r != ValidationResult.VALID) {
+					return r;
 				}
 			}
-			return true;
+			return ValidationResult.VALID;
 		} else {
 			// Not a list-like type
-			return isAssignable(fqn, defValue, javaProject);
+			return validateItemValue(fqn, defValue, javaProject);
 		}
 	}
 
-	private static boolean isAssignable(String typeFqn, String value, IJavaProject javaProject) {
+	private static ValidationResult validateItemValue(String typeFqn, String value, IJavaProject javaProject) {
 		try {
 			switch (typeFqn) {
 			case "boolean":
 			case "java.lang.Boolean":
-				return Boolean.valueOf(value) != null;
+				Boolean.parseBoolean(value);
+				break;
 			case "byte":
 			case "java.lang.Byte":
-				return Byte.valueOf(value.trim()) != null;
+				Byte.parseByte(value.trim());
+				break;
 			case "short":
 			case "java.lang.Short":
-				return Short.valueOf(value.trim()) != null;
+				Short.parseShort(value.trim());
+				break;
 			case "int":
 			case "java.lang.Integer":
-				return Integer.valueOf(value.trim()) != null;
+				Integer.parseInt(value.trim());
+				break;
 			case "long":
 			case "java.lang.Long":
-				return Long.valueOf(value.trim()) != null;
+				Long.parseLong(value.trim());
+				break;
 			case "float":
 			case "java.lang.Float":
-				return Float.valueOf(value.trim()) != null;
+				Float.parseFloat(value.trim());
+				break;
 			case "double":
 			case "java.lang.Double":
-				return Double.valueOf(value.trim()) != null;
+				Double.parseDouble(value.trim());
+				break;
 			case "char":
 			case "java.lang.Character":
 				if (value == null || value.length() != 1) {
-					return false;
+					return ValidationResult.INVALID;
 				}
-				return Character.valueOf(value.charAt(0)) != null;
+				break;
 			case "java.lang.Class":
-				return JDTTypeUtils.findType(javaProject, value.trim()) != null;
+				if(JDTTypeUtils.findType(javaProject, value.trim()) == null) {
+					return ValidationResult.UNSUPPORTED;
+				}
+				break;
 			case "java.lang.String":
-				return true;
+				break;
 			default:
-				return false;
+				return ValidationResult.UNSUPPORTED;
 			}
+			return ValidationResult.VALID;
 		} catch (NumberFormatException e) {
-			return false;
+			return ValidationResult.INVALID;
 		}
 	}
 
@@ -332,5 +356,9 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 		JsonObject data = new JsonObject();
 		data.addProperty(DIAGNOSTIC_DATA_NAME, name);
 		diagnostic.setData(data);
+	}
+
+	static enum ValidationResult {
+		VALID, INVALID, UNSUPPORTED
 	}
 }
