@@ -13,6 +13,10 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.core.config.java;
 
+import static java.lang.String.format;
+import static org.eclipse.lsp4j.DiagnosticSeverity.Error;
+import static org.eclipse.lsp4j.DiagnosticSeverity.Information;
+import static org.eclipse.lsp4mp.jdt.core.MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE;
 import static org.eclipse.lsp4mp.jdt.core.MicroProfileForJavaAssert.assertJavaCodeAction;
 import static org.eclipse.lsp4mp.jdt.core.MicroProfileForJavaAssert.assertJavaDiagnostics;
 import static org.eclipse.lsp4mp.jdt.core.MicroProfileForJavaAssert.ca;
@@ -20,6 +24,8 @@ import static org.eclipse.lsp4mp.jdt.core.MicroProfileForJavaAssert.createCodeAc
 import static org.eclipse.lsp4mp.jdt.core.MicroProfileForJavaAssert.d;
 import static org.eclipse.lsp4mp.jdt.core.MicroProfileForJavaAssert.te;
 import static org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigASTValidator.setDataForUnassigned;
+import static org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE;
+import static org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigErrorCode.VALIDATION_FOR_TYPE_UNSUPPORTED;
 
 import java.util.Arrays;
 
@@ -124,6 +130,37 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 
 		assertJavaDiagnostics(diagnosticsParams, utils, //
 				d1, d2, d3, d4, d5);
+	}
+
+	@Test
+	public void unsupportedDefaultValues() throws Exception {
+		String src = MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE;
+		IJavaProject javaProject = ProjectUtils.getJavaProject(MicroProfileMavenProjectName.microprofile_configproperties);
+		IJDTUtils utils = JDT_UTILS;
+
+		IFile javaFile = javaProject.getProject().getFile(new Path("src/main/java/org/acme/DefaultValues.java"));
+		MicroProfileJavaDiagnosticsParams diagnosticsParams = new MicroProfileJavaDiagnosticsParams();
+		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
+		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
+
+		String invalidType = "'%s' does not match the expected type of '%s'.";
+		String unsupported = "Validation of default values for type '%s' is not supported.";
+
+		// Line 16: default value 'x' for 'int' property is an error
+		Diagnostic d1 = d(15, 32, 35, format(invalidType, "x", "int"), Error, src, DEFAULT_VALUE_IS_WRONG_TYPE);
+		// Line 19: Custom types (types not in JDK) are not supported
+		Diagnostic d2 = d(18, 32, 42, format(unsupported, "Custom"), Information, src, VALIDATION_FOR_TYPE_UNSUPPORTED);
+		// Line 22: type java.nio.file.Path is not supported (but can be in the future!)
+		Diagnostic d3 = d(21, 32, 42, format(unsupported, "Path"), Information, src, VALIDATION_FOR_TYPE_UNSUPPORTED);
+		// Line 25: type java.net.URI is not supported (but can be in the future!)
+		Diagnostic d4 = d(24, 32, 54, format(unsupported, "URI"), Information, src, VALIDATION_FOR_TYPE_UNSUPPORTED);
+		// Line 28: type java.time.Instant is not supported (but can be in the future!)
+		Diagnostic d5 = d(27, 32, 54, format(unsupported, "Instant"), Information, src, VALIDATION_FOR_TYPE_UNSUPPORTED);
+		// Line 31: type java.time.Duration is not supported (but can be in the future!)
+		Diagnostic d6 = d(30, 32, 38, format(unsupported, "Duration"), Information, src, VALIDATION_FOR_TYPE_UNSUPPORTED);
+		// Line 34: Does not cause diagnostic, but maybe should show warning
+
+		assertJavaDiagnostics(diagnosticsParams, utils, d1, d2, d3, d4, d5, d6);
 	}
 
 	@Test
