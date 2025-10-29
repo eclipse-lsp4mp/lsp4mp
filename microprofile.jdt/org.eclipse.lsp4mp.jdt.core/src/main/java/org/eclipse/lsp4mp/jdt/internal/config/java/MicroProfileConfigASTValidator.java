@@ -358,7 +358,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 		diagnostic.setData(data);
 	}
 
-	static enum ValidationResult {
+	private static enum ValidationResult {
 		VALID, INVALID, UNSUPPORTED
 	}
 }
