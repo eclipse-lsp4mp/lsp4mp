@@ -177,7 +177,7 @@ public class JDTMicroProfileProjectManager {
 		return false;
 	}
 
-	private JDTMicroProfileProject getJDTMicroProfileProject(IFile file) {
+	public JDTMicroProfileProject getJDTMicroProfileProject(IFile file) {
 		IJavaProject project = JavaCore.create(file.getProject());
 		if (project == null) {
 			return null;

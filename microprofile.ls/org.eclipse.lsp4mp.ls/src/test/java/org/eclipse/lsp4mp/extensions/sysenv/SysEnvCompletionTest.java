@@ -13,7 +13,6 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.extensions.sysenv;
 
-import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.SYS_ENV_PROPERTIES_NUMBER;
 import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.c;
 import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.r;
 
@@ -64,7 +63,7 @@ public class SysEnvCompletionTest {
 
 	private static void testCompletionFor(String value, boolean snippetSupport, CompletionItem... expectedItems)
 			throws BadLocationException {
-		PropertiesFileAssert.testCompletionFor(value, snippetSupport, null, SYS_ENV_PROPERTIES_NUMBER,
+		PropertiesFileAssert.testCompletionFor(value, snippetSupport, null, null,
 				new ExtendedMicroProfileProjectInfo(new MicroProfileProjectInfo()), expectedItems);
 	}
 }

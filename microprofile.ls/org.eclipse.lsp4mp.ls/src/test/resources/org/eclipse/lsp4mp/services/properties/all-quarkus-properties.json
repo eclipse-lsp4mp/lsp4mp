@@ -5505,7 +5505,7 @@
       "sourceType": "io.quarkus.runtime.logging.AsyncConfig"
     },
     {
-      "type": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+      "type": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
       "sourceField": "overflow",
       "defaultValue": "block",
       "extensionName": "quarkus-core",
@@ -5586,7 +5586,7 @@
       "sourceType": "io.quarkus.runtime.logging.AsyncConfig"
     },
     {
-      "type": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+      "type": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
       "sourceField": "overflow",
       "defaultValue": "block",
       "extensionName": "quarkus-core",
@@ -5807,7 +5807,7 @@
       "sourceType": "io.quarkus.runtime.logging.AsyncConfig"
     },
     {
-      "type": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+      "type": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
       "sourceField": "overflow",
       "defaultValue": "block",
       "extensionName": "quarkus-core",
@@ -5898,7 +5898,7 @@
       "sourceType": "io.quarkus.runtime.logging.AsyncConfig"
     },
     {
-      "type": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+      "type": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
       "sourceField": "overflow",
       "defaultValue": "block",
       "extensionName": "quarkus-core",
@@ -5979,7 +5979,7 @@
       "sourceType": "io.quarkus.runtime.logging.AsyncConfig"
     },
     {
-      "type": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+      "type": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
       "sourceField": "overflow",
       "defaultValue": "block",
       "extensionName": "quarkus-core",
@@ -6200,7 +6200,7 @@
       "sourceType": "io.quarkus.runtime.logging.AsyncConfig"
     },
     {
-      "type": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+      "type": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
       "sourceField": "overflow",
       "defaultValue": "block",
       "extensionName": "quarkus-core",
@@ -15551,8 +15551,8 @@
           "value": "DISCARD"
         }
       ],
-      "name": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
-      "sourceType": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction"
+      "name": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
+      "sourceType": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction"
     },
     {
       "values": [

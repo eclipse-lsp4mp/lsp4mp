@@ -19224,7 +19224,7 @@
     }
   },
   {
-    "sourceType": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+    "sourceType": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
     "sourceField": "BLOCK",
     "location": {
       "uri": "jdt://contents/jboss-logmanager-embedded-1.0.4.jar/org.jboss.logmanager.handlers/AsyncHandler$OverflowAction.class?\u003dall-quarkus-extensions/C:%5C/Users%5C/azerr%5C/.m2%5C/repository%5C/org%5C/jboss%5C/logmanager%5C/jboss-logmanager-embedded%5C/1.0.4%5C/jboss-logmanager-embedded-1.0.4.jar%3Corg.jboss.logmanager.handlers(AsyncHandler$OverflowAction.class",
@@ -19241,7 +19241,7 @@
     }
   },
   {
-    "sourceType": "org.jboss.logmanager.handlers.AsyncHandler.OverflowAction",
+    "sourceType": "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
     "sourceField": "DISCARD",
     "location": {
       "uri": "jdt://contents/jboss-logmanager-embedded-1.0.4.jar/org.jboss.logmanager.handlers/AsyncHandler$OverflowAction.class?\u003dall-quarkus-extensions/C:%5C/Users%5C/azerr%5C/.m2%5C/repository%5C/org%5C/jboss%5C/logmanager%5C/jboss-logmanager-embedded%5C/1.0.4%5C/jboss-logmanager-embedded-1.0.4.jar%3Corg.jboss.logmanager.handlers(AsyncHandler$OverflowAction.class",

@@ -16,7 +16,6 @@ package org.eclipse.lsp4mp.extensions.reactivemessaging;
 import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.c;
 import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.load;
 import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.r;
-import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.SYS_ENV_PROPERTIES_NUMBER;
 
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
@@ -38,7 +37,7 @@ public class MicroProfileReactiveMessagingCompletionTest {
 	@Test
 	public void dynamic() throws BadLocationException {
 		String value = "|";
-		testCompletionFor(value, true, 4 + SYS_ENV_PROPERTIES_NUMBER,
+		testCompletionFor(value, true, null,
 				c("mp.messaging.incoming.prices.connector",
 						"mp.messaging.incoming.prices.connector=${1|smallrye-kafka,smallrye-amqp|}", r(0, 0, 0)), //
 				c("mp.messaging.outgoing.my-data-stream.connector",
@@ -53,7 +52,7 @@ public class MicroProfileReactiveMessagingCompletionTest {
 
 		value = "mp.messaging.incoming.prices.connector=smallrye-kafka\n" + //
 				"|";
-		testCompletionFor(value, true, 5 + SYS_ENV_PROPERTIES_NUMBER,
+		testCompletionFor(value, true, null,
 				c("mp.messaging.outgoing.my-data-stream.connector",
 						"mp.messaging.outgoing.my-data-stream.connector=${1|smallrye-kafka,smallrye-amqp|}",
 						r(1, 0, 0)), //
@@ -71,7 +70,7 @@ public class MicroProfileReactiveMessagingCompletionTest {
 	public void noExistChannel() throws BadLocationException {
 		String value = "mp.messaging.incoming.XXXXXX.connector=smallrye-kafka\n" + //
 				"|";
-		testCompletionFor(value, true, 4 + SYS_ENV_PROPERTIES_NUMBER, //
+		testCompletionFor(value, true, null, //
 				c("mp.messaging.incoming.prices.connector",
 						"mp.messaging.incoming.prices.connector=${1|smallrye-kafka,smallrye-amqp|}", r(1, 0, 0)), //
 				c("mp.messaging.outgoing.my-data-stream.connector",

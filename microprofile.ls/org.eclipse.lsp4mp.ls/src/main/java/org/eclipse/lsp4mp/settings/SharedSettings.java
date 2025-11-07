@@ -24,6 +24,7 @@ public class SharedSettings {
 	private final MicroProfileCompletionCapabilities completionCapabilities;
 	private final MicroProfileHoverSettings hoverSettings;
 	private final MicroProfileSymbolSettings symbolSettings;
+	private final MicroProfileExecutionSettings executionSettings;
 	private final MicroProfileValidationSettings validationSettings;
 	private final MicroProfileFormattingSettings formattingSettings;
 	private final MicroProfileCommandCapabilities commandCapabilities;
@@ -34,6 +35,7 @@ public class SharedSettings {
 		this.completionCapabilities = new MicroProfileCompletionCapabilities();
 		this.hoverSettings = new MicroProfileHoverSettings();
 		this.symbolSettings = new MicroProfileSymbolSettings();
+		this.executionSettings = new MicroProfileExecutionSettings();
 		this.validationSettings = new MicroProfileValidationSettings();
 		this.formattingSettings = new MicroProfileFormattingSettings();
 		this.commandCapabilities = new MicroProfileCommandCapabilities();
@@ -66,6 +68,15 @@ public class SharedSettings {
 	 */
 	public MicroProfileSymbolSettings getSymbolSettings() {
 		return symbolSettings;
+	}
+
+	/**
+	 * Returns the execution settings.
+	 *
+	 * @return the execution settings.
+	 */
+	public MicroProfileExecutionSettings getExecutionSettings() {
+		return executionSettings;
 	}
 
 	/**

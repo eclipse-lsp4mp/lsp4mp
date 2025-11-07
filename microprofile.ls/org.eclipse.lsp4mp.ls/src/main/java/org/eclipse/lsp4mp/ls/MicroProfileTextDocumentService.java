@@ -62,6 +62,7 @@ import org.eclipse.lsp4mp.ls.java.JavaTextDocuments;
 import org.eclipse.lsp4mp.ls.properties.PropertiesFileTextDocumentService;
 import org.eclipse.lsp4mp.services.properties.CompletionData;
 import org.eclipse.lsp4mp.settings.MicroProfileCodeLensSettings;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileSymbolSettings;
@@ -75,18 +76,18 @@ import org.eclipse.lsp4mp.settings.SharedSettings;
 public class MicroProfileTextDocumentService implements TextDocumentService {
 
 	private final Map<String, TextDocumentService> textDocumentServicesMap;
-	private final PropertiesFileTextDocumentService applicationPropertiesTextDocumentService;
+	private final PropertiesFileTextDocumentService propertiesTextDocumentService;
 	private final JavaFileTextDocumentService javaTextDocumentService;
 	private final SharedSettings sharedSettings;
 
 	public MicroProfileTextDocumentService(MicroProfileLanguageServer microprofileLanguageServer, SharedSettings sharedSettings, JavaTextDocuments javaTextDocuments) {
 		textDocumentServicesMap = new HashMap<>();
 		this.sharedSettings = sharedSettings;
-		applicationPropertiesTextDocumentService = new PropertiesFileTextDocumentService(microprofileLanguageServer,
+		propertiesTextDocumentService = new PropertiesFileTextDocumentService(microprofileLanguageServer,
 				sharedSettings);
 		javaTextDocumentService = new JavaFileTextDocumentService(microprofileLanguageServer,
-				applicationPropertiesTextDocumentService, sharedSettings, javaTextDocuments);
-		textDocumentServicesMap.put("properties", applicationPropertiesTextDocumentService);
+				propertiesTextDocumentService, sharedSettings, javaTextDocuments);
+		textDocumentServicesMap.put("properties", propertiesTextDocumentService);
 		textDocumentServicesMap.put("java", javaTextDocumentService);
 		textDocumentServicesMap.put("class", javaTextDocumentService);
 		textDocumentServicesMap.put("kt", javaTextDocumentService);
@@ -108,7 +109,7 @@ public class MicroProfileTextDocumentService implements TextDocumentService {
 		if (extendedClientCapabilities != null) {
 			sharedSettings.getCommandCapabilities().setCapabilities(extendedClientCapabilities.getCommands());
 		}
-		applicationPropertiesTextDocumentService.updateClientCapabilities(capabilities);
+		propertiesTextDocumentService.updateClientCapabilities(capabilities);
 		javaTextDocumentService.updateClientCapabilities(capabilities);
 	}
 
@@ -263,21 +264,26 @@ public class MicroProfileTextDocumentService implements TextDocumentService {
 	}
 
 	public void propertiesChanged(MicroProfilePropertiesChangeEvent event) {
-		applicationPropertiesTextDocumentService.propertiesChanged(event);
+		propertiesTextDocumentService.propertiesChanged(event);
 		javaTextDocumentService.propertiesChanged(event);
 	}
 
 	public void updateSymbolSettings(MicroProfileSymbolSettings newSettings) {
-		applicationPropertiesTextDocumentService.updateSymbolSettings(newSettings);
+		propertiesTextDocumentService.updateSymbolSettings(newSettings);
 	}
 
+	public void updateExecutionSettings(MicroProfileExecutionSettings newValidation) {
+		propertiesTextDocumentService.updateExecutionSettings(newValidation);
+		javaTextDocumentService.updateExecutionSettings(newValidation);
+	}
+	
 	public void updateValidationSettings(MicroProfileValidationSettings newValidation) {
-		applicationPropertiesTextDocumentService.updateValidationSettings(newValidation);
+		propertiesTextDocumentService.updateValidationSettings(newValidation);
 		javaTextDocumentService.updateValidationSettings(newValidation);
 	}
 
 	public void updateFormattingSettings(MicroProfileFormattingSettings newFormatting) {
-		applicationPropertiesTextDocumentService.updateFormattingSettings(newFormatting);
+		propertiesTextDocumentService.updateFormattingSettings(newFormatting);
 	}
 
 	public void updateCodeLensSettings(MicroProfileCodeLensSettings newCodeLens) {
@@ -285,7 +291,7 @@ public class MicroProfileTextDocumentService implements TextDocumentService {
 	}
 
 	public void updateInlayHintSettings(MicroProfileInlayHintSettings newInlayHint) {
-		applicationPropertiesTextDocumentService.updateInlayHintSettings(newInlayHint);
+		propertiesTextDocumentService.updateInlayHintSettings(newInlayHint);
 	}
 
 	private TextDocumentService getTextDocumentService(TextDocumentIdentifier document) {
@@ -313,7 +319,7 @@ public class MicroProfileTextDocumentService implements TextDocumentService {
 
 	public CompletableFuture<JsonSchemaForProjectInfo> getJsonSchemaForProjectInfo(
 			MicroProfileProjectInfoParams params) {
-		return applicationPropertiesTextDocumentService.getJsonSchemaForProjectInfo(params);
+		return propertiesTextDocumentService.getJsonSchemaForProjectInfo(params);
 	}
 
 }

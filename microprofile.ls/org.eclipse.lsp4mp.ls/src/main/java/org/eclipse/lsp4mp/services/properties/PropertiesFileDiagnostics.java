@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.services.properties.extensions.PropertiesFileExtensionRegistry;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 
 /**
@@ -28,9 +29,9 @@ import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
  *
  */
 class PropertiesFileDiagnostics {
-	
+
 	private final PropertiesFileExtensionRegistry extensionRegistry;
-	
+
 	public PropertiesFileDiagnostics(PropertiesFileExtensionRegistry extensionRegistry) {
 		this.extensionRegistry = extensionRegistry;
 	}
@@ -41,18 +42,21 @@ class PropertiesFileDiagnostics {
 	 *
 	 * @param document           the properties model.
 	 * @param projectInfo        the MicroProfile properties
+	 * @param executionSettings  the execution settings.
 	 * @param validationSettings the validation settings.
 	 * @param cancelChecker      the cancel checker.
 	 * @return the result of the validation.
 	 */
 	public List<Diagnostic> doDiagnostics(PropertiesModel document, MicroProfileProjectInfo projectInfo,
-			MicroProfileValidationSettings validationSettings, CancelChecker cancelChecker) {
+			MicroProfileExecutionSettings executionSettings, MicroProfileValidationSettings validationSettings,
+			CancelChecker cancelChecker) {
 		if (validationSettings == null) {
 			validationSettings = MicroProfileValidationSettings.DEFAULT;
 		}
 		List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();
 		if (validationSettings.isEnabled()) {
-			PropertiesFileValidator validator = new PropertiesFileValidator(projectInfo, diagnostics, validationSettings, extensionRegistry);
+			PropertiesFileValidator validator = new PropertiesFileValidator(projectInfo, diagnostics, executionSettings,
+					validationSettings, extensionRegistry);
 			validator.validate(document, cancelChecker);
 		}
 		return diagnostics;

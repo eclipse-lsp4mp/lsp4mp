@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
@@ -35,6 +37,7 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -57,6 +60,8 @@ import org.eclipse.lsp4mp.commons.MicroProfileProjectInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesScope;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertyDefinitionParams;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertyDocumentationParams;
+import org.eclipse.lsp4mp.jdt.core.project.JDTMicroProfileProject;
+import org.eclipse.lsp4mp.jdt.core.project.JDTMicroProfileProjectManager;
 import org.eclipse.lsp4mp.jdt.core.utils.IJDTUtils;
 import org.eclipse.lsp4mp.jdt.core.utils.JDTMicroProfileUtils;
 import org.eclipse.lsp4mp.jdt.internal.core.FakeJavaProject;
@@ -153,6 +158,11 @@ public class PropertiesManager {
 						+ (System.currentTimeMillis() - startTime) + "ms.");
 			}
 			mainMonitor.done();
+		}
+		// Classpath
+		if (scopes.contains(MicroProfilePropertiesScope.dependencies)) {
+			Set<String> classpath = JDTMicroProfileProjectManager.getInstance().getJDTMicroProfileProject(javaProject).getProjectRuntime().getClasspath();
+			info.setClasspath(classpath);
 		}
 		return info;
 	}
@@ -455,8 +465,8 @@ public class PropertiesManager {
 				params.getSourceMethod(), utils, progress);
 	}
 
-	public IMember findProperty(IJavaProject javaProject, String sourceType, String sourceField,
-			String sourceMethod, IJDTUtils utils, IProgressMonitor progress) throws JavaModelException, CoreException {
+	public IMember findProperty(IJavaProject javaProject, String sourceType, String sourceField, String sourceMethod,
+			IJDTUtils utils, IProgressMonitor progress) throws JavaModelException, CoreException {
 		IMember fieldOrMethod = findDeclaredProperty(javaProject, sourceType, sourceField, sourceMethod, progress);
 		if (fieldOrMethod != null) {
 			IClassFile classFile = fieldOrMethod.getClassFile();

@@ -14,6 +14,7 @@
 package org.eclipse.lsp4mp.commons;
 
 import java.util.Collections;
+import java.util.Set;
 
 import org.eclipse.lsp4mp.commons.metadata.ConfigurationMetadata;
 
@@ -37,6 +38,8 @@ public class MicroProfileProjectInfo extends ConfigurationMetadata {
 	private String projectURI;
 
 	private ClasspathKind classpathKind;
+	
+	private Set<String> classpath;
 
 	/**
 	 * Returns the project URI.
@@ -74,4 +77,11 @@ public class MicroProfileProjectInfo extends ConfigurationMetadata {
 		this.classpathKind = classpathKind;
 	}
 
+	public Set<String> getClasspath() {
+		return classpath;
+	}
+	
+	public void setClasspath(Set<String> classpath) {
+		this.classpath = classpath;
+	}
 }

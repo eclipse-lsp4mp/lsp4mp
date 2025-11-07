@@ -26,6 +26,7 @@ Export-Package: io.quarkus.runtime.util,
  org.eclipse.lsp4mp.commons,
  org.eclipse.lsp4mp.commons.codeaction,
  org.eclipse.lsp4mp.commons.metadata,
+ org.eclipse.lsp4mp.commons.runtime,
  org.eclipse.lsp4mp.jdt.core,
  org.eclipse.lsp4mp.jdt.core.java,
  org.eclipse.lsp4mp.jdt.core.java.codeaction,
@@ -57,11 +58,17 @@ Export-Package: io.quarkus.runtime.util,
  org.eclipse.lsp4mp.jdt.internal.reactivemessaging;x-friends:="org.eclipse.lsp4mp.jdt.test",
  org.eclipse.lsp4mp.jdt.internal.reactivemessaging.java;x-friends:="org.eclipse.lsp4mp.jdt.test",
  org.eclipse.lsp4mp.jdt.internal.restclient;x-friends:="org.eclipse.lsp4mp.jdt.test"
-Bundle-ClassPath: .
+Bundle-ClassPath: .,
+ runtimes/smallrye/commons-logging-jboss-logging-1.0.0.Final.jar,
+ runtimes/smallrye/jboss-logging-3.6.1.Final.jar,
+ runtimes/smallrye/jboss-logmanager-3.1.2.Final.jar,
+ runtimes/smallrye/microprofile-config-api-3.1.jar,
+ runtimes/smallrye/smallrye-config-3.14.1.jar,
+ runtimes/smallrye/smallrye-config-common-3.14.1.jar,
+ runtimes/smallrye/smallrye-config-core-3.14.1.jar
 Import-Package: com.google.common.graph,
  com.google.gson,
  com.google.gson.stream,
  io.smallrye.common.constraint,
  io.smallrye.common.expression,
- io.smallrye.common.function,
- org.jboss.logging
+ io.smallrye.common.function

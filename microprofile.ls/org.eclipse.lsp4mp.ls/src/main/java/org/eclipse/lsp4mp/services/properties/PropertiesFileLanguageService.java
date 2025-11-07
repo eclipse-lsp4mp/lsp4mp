@@ -42,6 +42,7 @@ import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.services.properties.extensions.PropertiesFileExtensionRegistry;
 import org.eclipse.lsp4mp.settings.MicroProfileCommandCapabilities;
 import org.eclipse.lsp4mp.settings.MicroProfileCompletionCapabilities;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileHoverSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
@@ -104,7 +105,7 @@ public class PropertiesFileLanguageService extends PropertiesFileExtensionRegist
 	 * @return the completion item with the empty fields resolved.
 	 */
 	public CompletionItem resolveCompletionItem(CompletionItem unresolved, MicroProfileProjectInfo projectInfo,
-		MicroProfileCompletionCapabilities completionCapabilities, CancelChecker cancelChecker) {
+			MicroProfileCompletionCapabilities completionCapabilities, CancelChecker cancelChecker) {
 		return completions.resolveCompletionItem(unresolved, projectInfo, completionCapabilities, cancelChecker);
 	}
 
@@ -119,9 +120,9 @@ public class PropertiesFileLanguageService extends PropertiesFileExtensionRegist
 	 * @param cancelChecker         the cancel checker
 	 * @return Hover object for the currently hovered token
 	 */
-	public CompletableFuture<Hover> doHover(PropertiesModel document, Position position, MicroProfileProjectInfo projectInfo,
-			MicroProfileHoverSettings hoverSettings, MicroProfilePropertyDocumentationProvider documentationProvider,
-			CancelChecker cancelChecker) {
+	public CompletableFuture<Hover> doHover(PropertiesModel document, Position position,
+			MicroProfileProjectInfo projectInfo, MicroProfileHoverSettings hoverSettings,
+			MicroProfilePropertyDocumentationProvider documentationProvider, CancelChecker cancelChecker) {
 		updateProperties(projectInfo, document);
 		return hover.doHover(document, position, projectInfo, hoverSettings, documentationProvider, cancelChecker);
 	}
@@ -223,9 +224,10 @@ public class PropertiesFileLanguageService extends PropertiesFileExtensionRegist
 	 * @return the result of the validation.
 	 */
 	public List<Diagnostic> doDiagnostics(PropertiesModel document, MicroProfileProjectInfo projectInfo,
-			MicroProfileValidationSettings validationSettings, CancelChecker cancelChecker) {
+			MicroProfileExecutionSettings executionSettings, MicroProfileValidationSettings validationSettings,
+			CancelChecker cancelChecker) {
 		updateProperties(projectInfo, document);
-		return diagnostics.doDiagnostics(document, projectInfo, validationSettings, cancelChecker);
+		return diagnostics.doDiagnostics(document, projectInfo, executionSettings, validationSettings, cancelChecker);
 	}
 
 	/**

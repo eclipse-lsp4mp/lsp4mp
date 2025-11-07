@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.IRegistryChangeEvent;
 import org.eclipse.core.runtime.IRegistryChangeListener;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4mp.jdt.core.MicroProfileCorePlugin;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.JavaDiagnosticsContext;
 import org.eclipse.lsp4mp.jdt.core.java.validators.JavaASTValidator;
@@ -194,14 +193,13 @@ public class JavaASTValidatorRegistry extends AnnotationValidator implements IRe
 
 	}
 
-	public Collection<ASTVisitor> getValidators(JavaDiagnosticsContext context, List<Diagnostic> diagnostics,
-			IProgressMonitor monitor) {
+	public Collection<ASTVisitor> getValidators(JavaDiagnosticsContext context, IProgressMonitor monitor) {
 		List<ASTVisitor> validators = new ArrayList<>();
-		addValidator(new AnnotationRulesJavaASTValidator(getRules()), context, diagnostics, monitor, validators);
+		addValidator(new AnnotationRulesJavaASTValidator(getRules()), context, monitor, validators);
 		for (IConfigurationElement ce : validatorsFromClass) {
 			try {
 				JavaASTValidator validator = (JavaASTValidator) ce.createExecutableExtension(CLASS_ATTR);
-				addValidator(validator, context, diagnostics, monitor, validators);
+				addValidator(validator, context, monitor, validators);
 			} catch (CoreException e) {
 				LOGGER.log(Level.SEVERE, "  Error while creating JavaASTValidator " + ce.getAttribute(CLASS_ATTR), e);
 			}
@@ -209,9 +207,9 @@ public class JavaASTValidatorRegistry extends AnnotationValidator implements IRe
 		return validators;
 	}
 
-	private void addValidator(JavaASTValidator validator, JavaDiagnosticsContext context, List<Diagnostic> diagnostics,
-			IProgressMonitor monitor, List<ASTVisitor> validators) {
-		validator.initialize(context, diagnostics);
+	private void addValidator(JavaASTValidator validator, JavaDiagnosticsContext context, IProgressMonitor monitor,
+			List<ASTVisitor> validators) {
+		validator.initialize(context);
 		try {
 			if (validator.isAdaptedForDiagnostics(context, monitor)) {
 				validators.add(validator);

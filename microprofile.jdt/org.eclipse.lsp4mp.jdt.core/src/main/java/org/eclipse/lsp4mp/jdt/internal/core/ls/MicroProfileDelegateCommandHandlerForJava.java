@@ -32,6 +32,7 @@ import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -39,7 +40,6 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4mp.commons.DocumentFormat;
-import org.eclipse.lsp4mp.commons.JavaCursorContextKind;
 import org.eclipse.lsp4mp.commons.JavaCursorContextResult;
 import org.eclipse.lsp4mp.commons.JavaFileInfo;
 import org.eclipse.lsp4mp.commons.MicroProfileDefinition;
@@ -53,6 +53,7 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaFileInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionResolveData;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.utils.JSONUtility;
 import org.eclipse.lsp4mp.jdt.core.PropertiesManagerForJava;
 
@@ -80,26 +81,26 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 	@Override
 	public Object executeCommand(String commandId, List<Object> arguments, IProgressMonitor progress) throws Exception {
 		switch (commandId) {
-			case FILE_INFO_COMMAND_ID:
-				return getFileInfo(arguments, commandId, progress);
-			case JAVA_CODEACTION_COMMAND_ID:
-				return getCodeActionForJava(arguments, commandId, progress);
-			case JAVA_CODEACTION_RESOLVE_COMMAND_ID:
-				return resolveCodeActionForJava(arguments, commandId, progress);
-			case JAVA_CODELENS_COMMAND_ID:
-				return getCodeLensForJava(arguments, commandId, progress);
-			case JAVA_COMPLETION_COMMAND_ID:
-				return getCompletionForJava(arguments, commandId, progress);
-			case JAVA_DEFINITION_COMMAND_ID:
-				return getDefinitionForJava(arguments, commandId, progress);
-			case JAVA_DIAGNOSTICS_COMMAND_ID:
-				return getDiagnosticsForJava(arguments, commandId, progress);
-			case JAVA_HOVER_COMMAND_ID:
-				return getHoverForJava(arguments, commandId, progress);
-			case JAVA_WORKSPACE_SYMBOLS_ID:
-				return getWorkspaceSymbolsForJava(arguments, commandId, progress);
-			default:
-				throw new UnsupportedOperationException(String.format("Unsupported command '%s'!", commandId));
+		case FILE_INFO_COMMAND_ID:
+			return getFileInfo(arguments, commandId, progress);
+		case JAVA_CODEACTION_COMMAND_ID:
+			return getCodeActionForJava(arguments, commandId, progress);
+		case JAVA_CODEACTION_RESOLVE_COMMAND_ID:
+			return resolveCodeActionForJava(arguments, commandId, progress);
+		case JAVA_CODELENS_COMMAND_ID:
+			return getCodeLensForJava(arguments, commandId, progress);
+		case JAVA_COMPLETION_COMMAND_ID:
+			return getCompletionForJava(arguments, commandId, progress);
+		case JAVA_DEFINITION_COMMAND_ID:
+			return getDefinitionForJava(arguments, commandId, progress);
+		case JAVA_DIAGNOSTICS_COMMAND_ID:
+			return getDiagnosticsForJava(arguments, commandId, progress);
+		case JAVA_HOVER_COMMAND_ID:
+			return getHoverForJava(arguments, commandId, progress);
+		case JAVA_WORKSPACE_SYMBOLS_ID:
+			return getWorkspaceSymbolsForJava(arguments, commandId, progress);
+		default:
+			throw new UnsupportedOperationException(String.format("Unsupported command '%s'!", commandId));
 		}
 	}
 
@@ -213,13 +214,13 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 	private static CodeAction createMicroProfileJavaCodeActionResolveParams(List<Object> arguments, String commandId) {
 		Map<String, Object> obj = getFirst(arguments);
 		if (obj == null) {
-			throw new UnsupportedOperationException(String.format(
-					"Command '%s' must be called with one CodeAction argument!", commandId));
+			throw new UnsupportedOperationException(
+					String.format("Command '%s' must be called with one CodeAction argument!", commandId));
 		}
 		CodeAction codeAction = JSONUtility.toModel(obj, CodeAction.class);
 		if (codeAction == null) {
-			throw new UnsupportedOperationException(String.format(
-					"Command '%s' must be called with one CodeAction argument!", commandId));
+			throw new UnsupportedOperationException(
+					String.format("Command '%s' must be called with one CodeAction argument!", commandId));
 		}
 		CodeActionResolveData resolveData = JSONUtility.toModel(codeAction.getData(), CodeActionResolveData.class);
 		if (resolveData == null) {
@@ -290,8 +291,10 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 	private static MicroProfileJavaCompletionResult getCompletionForJava(List<Object> arguments, String commandId,
 			IProgressMonitor monitor) throws JavaModelException, CoreException {
 		MicroProfileJavaCompletionParams params = createMicroProfileJavaCompletionParams(arguments, commandId);
-		CompletionList completionList = PropertiesManagerForJava.getInstance().completion(params, JDTUtilsLSImpl.getInstance(), monitor);
-		JavaCursorContextResult cursorContext = PropertiesManagerForJava.getInstance().javaCursorContext(params, JDTUtilsLSImpl.getInstance(), monitor);
+		CompletionList completionList = PropertiesManagerForJava.getInstance().completion(params,
+				JDTUtilsLSImpl.getInstance(), monitor);
+		JavaCursorContextResult cursorContext = PropertiesManagerForJava.getInstance().javaCursorContext(params,
+				JDTUtilsLSImpl.getInstance(), monitor);
 		return new MicroProfileJavaCompletionResult(completionList, cursorContext);
 	}
 
@@ -412,7 +415,11 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 		Map<String, Object> settingsObj = getObject(obj, "settings");
 		if (settingsObj != null) {
 			List<String> patterns = getStringList(settingsObj, "patterns");
-			settings = new MicroProfileJavaDiagnosticsSettings(patterns);
+			int severity = getInt(settingsObj, "validationValueSeverity");
+			int executionMode = getInt(settingsObj, "mode");
+			settings = new MicroProfileJavaDiagnosticsSettings(patterns,
+					severity == 0 ? null : DiagnosticSeverity.forValue(severity),
+					ExecutionMode.forValue(executionMode));
 		}
 		return new MicroProfileJavaDiagnosticsParams(javaFileUri, settings);
 	}
@@ -478,10 +485,10 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 	private static String createMicroProfileJavaWorkspaceSymbolParams(List<Object> arguments, String commandId) {
 		Object projectUriObj = (String) arguments.get(0);
 		if (projectUriObj == null || !(projectUriObj instanceof String)) {
-			throw new UnsupportedOperationException(String
-					.format("Command '%s' must be called with one projectUri: String argument!", commandId));
+			throw new UnsupportedOperationException(
+					String.format("Command '%s' must be called with one projectUri: String argument!", commandId));
 		}
-		return (String)projectUriObj;
+		return (String) projectUriObj;
 	}
 
 }

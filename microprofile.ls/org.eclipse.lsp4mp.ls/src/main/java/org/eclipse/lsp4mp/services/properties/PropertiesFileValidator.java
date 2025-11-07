@@ -13,8 +13,6 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.services.properties;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +22,6 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.Diagnostic;
@@ -33,9 +29,11 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
-import org.eclipse.lsp4mp.commons.metadata.ConfigurationMetadata;
 import org.eclipse.lsp4mp.commons.metadata.ItemMetadata;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
+import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.commons.utils.StringUtils;
+import org.eclipse.lsp4mp.extensions.ExtendedMicroProfileProjectInfo;
 import org.eclipse.lsp4mp.model.Node;
 import org.eclipse.lsp4mp.model.Node.NodeType;
 import org.eclipse.lsp4mp.model.PropertiesModel;
@@ -43,6 +41,7 @@ import org.eclipse.lsp4mp.model.Property;
 import org.eclipse.lsp4mp.model.PropertyValueExpression;
 import org.eclipse.lsp4mp.services.properties.extensions.PropertiesFileExtensionRegistry;
 import org.eclipse.lsp4mp.services.properties.extensions.participants.IPropertyValidatorParticipant;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.utils.EnvUtils;
 import org.eclipse.lsp4mp.utils.PositionUtils;
@@ -63,6 +62,8 @@ class PropertiesFileValidator {
 
 	private final List<Diagnostic> diagnostics;
 
+	private final MicroProfileExecutionSettings executionSettings;
+
 	private final MicroProfileValidationSettings validationSettings;
 	private final PropertiesFileExtensionRegistry extensionRegistry;
 	private final Map<String, List<Property>> existingProperties;
@@ -73,9 +74,11 @@ class PropertiesFileValidator {
 	private ValidationValueContext validationValueContext;
 
 	public PropertiesFileValidator(MicroProfileProjectInfo projectInfo, List<Diagnostic> diagnostics,
-			MicroProfileValidationSettings validationSettings, PropertiesFileExtensionRegistry extensionRegistry) {
+			MicroProfileExecutionSettings executionSettings, MicroProfileValidationSettings validationSettings,
+			PropertiesFileExtensionRegistry extensionRegistry) {
 		this.projectInfo = projectInfo;
 		this.diagnostics = diagnostics;
+		this.executionSettings = executionSettings;
 		this.validationSettings = validationSettings;
 		this.extensionRegistry = extensionRegistry;
 		this.existingProperties = new HashMap<String, List<Property>>();
@@ -249,15 +252,20 @@ class PropertiesFileValidator {
 			return;
 		}
 
-		//
-		String errorMessage = getErrorIfInvalidEnum(metadata, projectInfo, propertiesModel, value);
-		if (errorMessage == null) {
-			errorMessage = getErrorIfValueTypeMismatch(metadata, value);
-		}
-
-		if (errorMessage != null) {
-			Range range = PositionUtils.createRange(start, end, propertiesModel.getDocument());
-			addDiagnostic(errorMessage, range, severity, ValidationType.value.name());
+		// 3. Validate with the real MicroProfile converter from the MicroProfile
+		// application classpath
+		if (projectInfo instanceof ExtendedMicroProfileProjectInfo) {
+			MicroProfileProjectRuntime projectRuntime = ((ExtendedMicroProfileProjectInfo) projectInfo)
+					.getProjectRuntime();
+			if (projectRuntime != null) {
+				ExecutionMode preferredMode = executionSettings.getExecutionMode();
+				projectRuntime.validateValue(value, metadata.getType(), preferredMode,
+						(errorMessage, source, code, converterStart, converterEnd) -> {
+							Range range = PositionUtils.createRange(start + converterStart,
+									start + converterStart + converterEnd, propertiesModel.getDocument());
+							addDiagnostic(errorMessage, range, severity, code);
+						});
+			}
 		}
 	}
 
@@ -370,155 +378,6 @@ class PropertiesFileValidator {
 					addDiagnostic("Missing '}'", propValExpr, syntaxSeverity, ValidationType.syntax.name());
 				}
 			}
-		}
-	}
-
-	/**
-	 * Returns an error message only if <code>value</code> is an invalid enum for
-	 * the property defined by <code>metadata</code>
-	 *
-	 * @param metadata metadata defining a property
-	 * @param value    value to check
-	 * @return error message only if <code>value</code> is an invalid enum for the
-	 *         property defined by <code>metadata</code>
-	 */
-	private String getErrorIfInvalidEnum(ItemMetadata metadata, ConfigurationMetadata configuration,
-			PropertiesModel model, String value) {
-		if (!PropertiesFileUtils.isValidEnum(metadata, configuration, value)) {
-			return "Invalid enum value: '" + value + "' is invalid for type " + metadata.getType();
-		}
-		return null;
-	}
-
-	/**
-	 * Returns an error message only if <code>value</code> is an invalid value type
-	 * for the property defined by <code>metadata</code>
-	 *
-	 * @param metadata metadata defining a property
-	 * @param value    value to check
-	 * @return error message only if <code>value</code> is an invalid value type for
-	 *         the property defined by <code>metadata</code>
-	 */
-	private static String getErrorIfValueTypeMismatch(ItemMetadata metadata, String value) {
-
-		if (isBuildtimePlaceholder(value)) {
-			return null;
-		}
-
-		if (metadata.isRegexType()) {
-			try {
-				Pattern.compile(value);
-				return null;
-			} catch (PatternSyntaxException e) {
-				return e.getMessage() + System.lineSeparator();
-			}
-		}
-
-		if (metadata.isBooleanType() && !isBooleanString(value)) {
-			return "Type mismatch: " + metadata.getType()
-					+ " expected. By default, this value will be interpreted as 'false'";
-		}
-
-		if ((metadata.isIntegerType() && !isIntegerString(value) || (metadata.isFloatType() && !isFloatString(value))
-				|| (metadata.isDoubleType() && !isDoubleString(value))
-				|| (metadata.isLongType() && !isLongString(value)) || (metadata.isShortType() && !isShortString(value))
-				|| (metadata.isBigDecimalType() && !isBigDecimalString(value))
-				|| (metadata.isBigIntegerType() && !isBigIntegerString(value)))) {
-			return "Type mismatch: " + metadata.getType() + " expected";
-		}
-		return null;
-	}
-
-	private static boolean isBooleanString(String str) {
-		if (str == null) {
-			return false;
-		}
-		String strUpper = str.toUpperCase();
-		return "TRUE".equals(strUpper) || "FALSE".equals(strUpper) || "Y".equals(strUpper) || "YES".equals(strUpper)
-				|| "1".equals(strUpper) || "ON".equals(strUpper);
-	}
-
-	private static boolean isIntegerString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			Integer.parseInt(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	private static boolean isFloatString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			Float.parseFloat(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	private static boolean isLongString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			Long.parseLong(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	private static boolean isDoubleString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			Double.parseDouble(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	private static boolean isShortString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			Short.parseShort(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	private static boolean isBigDecimalString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			new BigDecimal(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	private static boolean isBigIntegerString(String str) {
-		if (!StringUtils.hasText(str)) {
-			return false;
-		}
-		try {
-			new BigInteger(str);
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
 		}
 	}
 

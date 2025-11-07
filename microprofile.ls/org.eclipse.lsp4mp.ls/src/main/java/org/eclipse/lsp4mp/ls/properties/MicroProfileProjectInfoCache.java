@@ -28,6 +28,7 @@ import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesScope;
+import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.extensions.ExtendedMicroProfileProjectInfo;
 import org.eclipse.lsp4mp.ls.api.MicroProfileProjectInfoProvider;
 
@@ -42,12 +43,14 @@ class MicroProfileProjectInfoCache {
 	private static final Logger LOGGER = Logger.getLogger(MicroProfileProjectInfoCache.class.getName());
 
 	private final Map<String /* application.properties URI */, CompletableFuture<MicroProfileProjectInfo>> cache;
+	private final Map<String /* project URI */, MicroProfileProjectRuntime> projectRuntimes;
 
 	private final MicroProfileProjectInfoProvider provider;
 
 	public MicroProfileProjectInfoCache(MicroProfileProjectInfoProvider provider) {
 		this.provider = provider;
 		this.cache = new ConcurrentHashMap<>();
+		this.projectRuntimes = new ConcurrentHashMap<>();
 	}
 
 	/**
@@ -74,7 +77,7 @@ class MicroProfileProjectInfoCache {
 			// not found in the cache, load the project info from the JDT LS Extension
 			params.setScopes(MicroProfilePropertiesScope.SOURCES_AND_DEPENDENCIES);
 			CompletableFuture<MicroProfileProjectInfo> future = provider.getProjectInfo(params). //
-					thenApply(info -> new ExtendedMicroProfileProjectInfo(info));
+					thenApply(info -> new ExtendedMicroProfileProjectInfo(info, getOrCreateProjectRuntime(info)));
 			// cache the future.
 			cache.put(params.getUri(), future);
 			return future;
@@ -94,8 +97,8 @@ class MicroProfileProjectInfoCache {
 						LOGGER.log(Level.WARNING, String.format(
 								"Error while getting MicroProfileProjectInfo (sources) for '%s'", params.getUri()), ex);
 						return MicroProfileProjectInfo.EMPTY_PROJECT_INFO;
-					}). //
-					thenApply(info ->
+					}) //
+					.thenApply(info ->
 					// then update the cache with the new properties
 					{
 						wrapper.updateSourcesProperties(info.getProperties(), info.getHints());
@@ -105,6 +108,11 @@ class MicroProfileProjectInfoCache {
 
 		// Returns the cached project info
 		return projectInfo;
+	}
+
+	private MicroProfileProjectRuntime getOrCreateProjectRuntime(MicroProfileProjectInfo info) {
+		return projectRuntimes.computeIfAbsent(info.getProjectURI(), f -> new MicroProfileProjectRuntime(
+				info.getClasspath() != null ? info.getClasspath() : Collections.emptySet()));
 	}
 
 	private static ExtendedMicroProfileProjectInfo getProjectInfoWrapper(
@@ -133,6 +141,7 @@ class MicroProfileProjectInfoCache {
 	private Collection<String> classpathChanged(Set<String> projectURIs) {
 		List<String> applicationPropertiesURIs = getApplicationPropertiesURIs(projectURIs);
 		applicationPropertiesURIs.forEach(cache::remove);
+		updateProjectRuntimes(projectURIs);
 		return applicationPropertiesURIs;
 	}
 
@@ -144,7 +153,17 @@ class MicroProfileProjectInfoCache {
 				info.clearPropertiesFromSource();
 			}
 		}
+		updateProjectRuntimes(projectURIs);
 		return applicationPropertiesURIs;
+	}
+
+	private void updateProjectRuntimes(Set<String> projectURIs) {
+		projectURIs.forEach(projectUri -> {
+			MicroProfileProjectRuntime projectRuntime = projectRuntimes.get(projectUri);
+			if( projectRuntime  != null) {
+				projectRuntime.clearProjectClassCache();
+			}
+		});
 	}
 
 	/**

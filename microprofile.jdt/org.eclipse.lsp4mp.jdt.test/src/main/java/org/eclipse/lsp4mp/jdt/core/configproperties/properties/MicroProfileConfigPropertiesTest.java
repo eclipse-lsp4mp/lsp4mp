@@ -55,23 +55,23 @@ public class MicroProfileConfigPropertiesTest extends BasePropertiesManagerTest 
 				p(null, "old.location2", "java.lang.String", null, false, "org.acme.DetailsWithoutPrefix", "location2",
 						null, 0, null),
 
-				p(null, "host3", "java.lang.String", null, false, "org.acme.Server.ServerConfigProperties", "host3",
+				p(null, "host3", "java.lang.String", null, false, "org.acme.Server$ServerConfigProperties", "host3",
 						null, 0, null),
-				p(null, "port3", "int", null, false, "org.acme.Server.ServerConfigProperties", "port3", null, 0, null),
+				p(null, "port3", "int", null, false, "org.acme.Server$ServerConfigProperties", "port3", null, 0, null),
 				p(null, "reasons3", "java.util.Map", null, false,
-						"org.acme.Server.ServerConfigProperties", "reasons3", null, 0, null),
-				p(null, "server3.host3", "java.lang.String", null, false, "org.acme.Server.ServerConfigProperties",
+						"org.acme.Server$ServerConfigProperties", "reasons3", null, 0, null),
+				p(null, "server3.host3", "java.lang.String", null, false, "org.acme.Server$ServerConfigProperties",
 						"host3", null, 0, null),
-				p(null, "server3.port3", "int", null, false, "org.acme.Server.ServerConfigProperties", "port3", null, 0,
+				p(null, "server3.port3", "int", null, false, "org.acme.Server$ServerConfigProperties", "port3", null, 0,
 						null),
 				p(null, "server3.reasons3", "java.util.Map", null, false,
-						"org.acme.Server.ServerConfigProperties", "reasons3", null, 0, null),
-				p(null, "cloud.host3", "java.lang.String", null, false, "org.acme.Server.ServerConfigProperties",
+						"org.acme.Server$ServerConfigProperties", "reasons3", null, 0, null),
+				p(null, "cloud.host3", "java.lang.String", null, false, "org.acme.Server$ServerConfigProperties",
 						"host3", null, 0, null),
-				p(null, "cloud.port3", "int", null, false, "org.acme.Server.ServerConfigProperties", "port3", null, 0,
+				p(null, "cloud.port3", "int", null, false, "org.acme.Server$ServerConfigProperties", "port3", null, 0,
 						null),
 				p(null, "cloud.reasons3", "java.util.Map", null, false,
-						"org.acme.Server.ServerConfigProperties", "reasons3", null, 0, null)
+						"org.acme.Server$ServerConfigProperties", "reasons3", null, 0, null)
 
 		);
 

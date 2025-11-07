@@ -115,7 +115,7 @@ public class MicroProfileValidationTypeSettings {
 		return isExcluded(propertyName) ? null : severity;
 	}
 
-	private DiagnosticSeverity getDiagnosticSeverity() {
+	public DiagnosticSeverity getDiagnosticSeverity() {
 		DiagnosticSeverity[] severities = DiagnosticSeverity.values();
 		for (DiagnosticSeverity severity : severities) {
 			if (severity.name().toUpperCase().equals(this.severity.toUpperCase())) {
@@ -170,8 +170,8 @@ public class MicroProfileValidationTypeSettings {
 		AntPathMatcher matcher = new AntPathMatcher();
 		matcher.setCachePatterns(true);
 		return excluded.stream() //
-			.map(p -> new ExcludedProperty(p, matcher)) //
-			.collect(Collectors.toList());
+				.map(p -> new ExcludedProperty(p, matcher)) //
+				.collect(Collectors.toList());
 	}
 
 	@Override
