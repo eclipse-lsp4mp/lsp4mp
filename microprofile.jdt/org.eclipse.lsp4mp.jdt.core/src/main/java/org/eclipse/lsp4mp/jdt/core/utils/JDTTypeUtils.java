@@ -164,7 +164,7 @@ public class JDTTypeUtils {
 	}
 
 	public static String getPropertyType(IType type, String typeName) {
-		return type != null ? type.getFullyQualifiedName('.') : typeName;
+		return type != null ? type.getFullyQualifiedName('$') : typeName;
 	}
 
 	/**

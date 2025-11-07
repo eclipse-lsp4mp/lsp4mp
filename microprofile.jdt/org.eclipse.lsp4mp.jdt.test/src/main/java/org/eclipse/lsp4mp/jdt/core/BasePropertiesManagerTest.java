@@ -140,21 +140,20 @@ public class BasePropertiesManagerTest {
 
 	public static IJavaProject loadMavenProject(String mavenProject) throws CoreException, Exception {
 		// Load existing "hibernate-orm-resteasy" maven project
-		return loadJavaProjects(new String [] { "maven/" + mavenProject})[0];
+		return loadJavaProjects(new String[] { "maven/" + mavenProject })[0];
 	}
 
 	public static IJavaProject loadGradleProject(String gradleProject) throws CoreException, Exception {
-		var gradleJavaProject = loadJavaProjects(new String [] { "gradle/" + gradleProject})[0];
+		var gradleJavaProject = loadJavaProjects(new String[] { "gradle/" + gradleProject })[0];
 		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
 		return gradleJavaProject;
 	}
 
 	public static IJavaProject loadMavenProjectFromSubFolder(String mavenProject, String subFolder) throws Exception {
-		return loadJavaProjects(new String [] {"maven/" + subFolder + "/" + mavenProject})[0];
+		return loadJavaProjects(new String[] { "maven/" + subFolder + "/" + mavenProject })[0];
 	}
 
-	public static IJavaProject [] loadJavaProjects(String [] parentSlashName)
-			throws CoreException, Exception {
+	public static IJavaProject[] loadJavaProjects(String[] parentSlashName) throws CoreException, Exception {
 
 		List<IPath> paths = new ArrayList<>();
 		for (String parentSlashNameEntry : parentSlashName) {
@@ -168,7 +167,8 @@ public class BasePropertiesManagerTest {
 		}
 
 		JavaLanguageServerPlugin.getPreferencesManager().initialize();
-		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(), new HashMap<>());
+		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(),
+				new HashMap<>());
 		JavaLanguageServerPlugin.getProjectsManager().initializeProjects(paths, null);
 
 		IProgressMonitor monitor = new NullProgressMonitor();
@@ -192,7 +192,8 @@ public class BasePropertiesManagerTest {
 
 		List<IJavaProject> javaProjects = new ArrayList<>();
 		for (IPath path : paths) {
-			IProjectDescription description = ResourcesPlugin.getWorkspace().loadProjectDescription(path.append(".project"));
+			IProjectDescription description = ResourcesPlugin.getWorkspace()
+					.loadProjectDescription(path.append(".project"));
 			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(description.getName());
 			javaProjects.add(JavaCore.create(project));
 		}
@@ -296,7 +297,9 @@ public class BasePropertiesManagerTest {
 	private static void enableClassFileContentsSupport() {
 		Map<String, Object> extendedClientCapabilities = new HashMap<>();
 		extendedClientCapabilities.put("classFileContentsSupport", "true");
-		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(),
-				extendedClientCapabilities);
+		var preferences = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferences != null) {
+			preferences.updateClientPrefences(new ClientCapabilities(), extendedClientCapabilities);
+		}
 	}
 }

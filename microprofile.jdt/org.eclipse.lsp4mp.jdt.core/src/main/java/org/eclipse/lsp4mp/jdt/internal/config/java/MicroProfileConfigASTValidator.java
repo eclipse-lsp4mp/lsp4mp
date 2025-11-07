@@ -26,7 +26,6 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -72,10 +71,6 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 
 	private static final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-	private static final Pattern ARRAY_SPLITTER = Pattern.compile("(?<!\\\\),");
-
-	private static final String EXPECTED_TYPE_ERROR_MESSAGE = "''{0}'' does not match the expected type of ''{1}''.";
-
 	private static final String EMPTY_LIST_LIKE_WARNING_MESSAGE = "''defaultValue=\"\"'' will behave as if no default value is set, and will not be treated as an empty ''{0}''.";
 
 	private static final String NO_VALUE_ERROR_MESSAGE = "The property ''{0}'' is not assigned a value in any config file, and must be assigned at runtime.";
@@ -87,8 +82,8 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 	private String currentPrefix;
 
 	@Override
-	public void initialize(JavaDiagnosticsContext context, List<Diagnostic> diagnostics) {
-		super.initialize(context, diagnostics);
+	public void initialize(JavaDiagnosticsContext context) {
+		super.initialize(context);
 		this.currentPrefix = null;
 		this.patterns = getPatternsFromContext(context);
 	}
@@ -169,7 +164,6 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 	 */
 	private void validatePropertyDefaultValue(Annotation annotation, Expression defaultValueExpr) {
 		FieldDeclaration fieldDeclaration = (FieldDeclaration) annotation.getParent();
-		IJavaProject javaProject = getContext().getJavaProject();
 		if (defaultValueExpr != null) {
 			String defValue = defaultValueExpr instanceof StringLiteral
 					? ((StringLiteral) defaultValueExpr).getLiteralValue()
@@ -181,11 +175,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 					super.addDiagnostic(message, MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE, defaultValueExpr,
 							MicroProfileConfigErrorCode.EMPTY_LIST_NOT_SUPPORTED, DiagnosticSeverity.Warning);
 				}
-				if (!isAssignable(fieldBinding, javaProject, defValue)) {
-					String message = MessageFormat.format(EXPECTED_TYPE_ERROR_MESSAGE, defValue, fieldBinding.getName());
-					super.addDiagnostic(message, MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE, defaultValueExpr,
-							MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE, DiagnosticSeverity.Error);
-				}
+				getContext().validateWithConverter(defValue, fieldBinding, defaultValueExpr);
 			}
 		}
 	}
@@ -242,78 +232,6 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 		}
 		String fqn = Signature.getTypeErasure(type.getQualifiedName());
 		return "java.util.List".equals(fqn) || "java.util.Set".equals(fqn);
-	}
-
-	private static boolean isAssignable(ITypeBinding fieldBinding, IJavaProject javaProject, String defValue) {
-		String fqn = Signature.getTypeErasure(fieldBinding.getQualifiedName());
-		// handle list-like types.
-		// MicroProfile config supports arrays, `java.util.List`, and `java.util.Set` by
-		// default. See:
-		// https://download.eclipse.org/microprofile/microprofile-config-2.0/microprofile-config-spec-2.0.html#_array_converters
-		if (isListLike(fieldBinding)) {
-			if (defValue.isEmpty()) {
-				// A different error is shown in this case
-				return true;
-			}
-			String itemsTypeFqn;
-			if (fieldBinding.isArray()) {
-				itemsTypeFqn = Signature.getTypeErasure(fieldBinding.getElementType().getQualifiedName());
-			} else {
-				itemsTypeFqn = Signature.getTypeErasure(fieldBinding.getTypeArguments()[0].getQualifiedName());
-			}
-			for (String listItemValue : ARRAY_SPLITTER.split(defValue, -1)) {
-				listItemValue = listItemValue.replace("\\,", ",");
-				if (!isAssignable(itemsTypeFqn, listItemValue, javaProject)) {
-					return false;
-				}
-			}
-			return true;
-		} else {
-			// Not a list-like type
-			return isAssignable(fqn, defValue, javaProject);
-		}
-	}
-
-	private static boolean isAssignable(String typeFqn, String value, IJavaProject javaProject) {
-		try {
-			switch (typeFqn) {
-			case "boolean":
-			case "java.lang.Boolean":
-				return Boolean.valueOf(value) != null;
-			case "byte":
-			case "java.lang.Byte":
-				return Byte.valueOf(value.trim()) != null;
-			case "short":
-			case "java.lang.Short":
-				return Short.valueOf(value.trim()) != null;
-			case "int":
-			case "java.lang.Integer":
-				return Integer.valueOf(value.trim()) != null;
-			case "long":
-			case "java.lang.Long":
-				return Long.valueOf(value.trim()) != null;
-			case "float":
-			case "java.lang.Float":
-				return Float.valueOf(value.trim()) != null;
-			case "double":
-			case "java.lang.Double":
-				return Double.valueOf(value.trim()) != null;
-			case "char":
-			case "java.lang.Character":
-				if (value == null || value.length() != 1) {
-					return false;
-				}
-				return Character.valueOf(value.charAt(0)) != null;
-			case "java.lang.Class":
-				return JDTTypeUtils.findType(javaProject, value.trim()) != null;
-			case "java.lang.String":
-				return true;
-			default:
-				return false;
-			}
-		} catch (NumberFormatException e) {
-			return false;
-		}
 	}
 
 	private static boolean doesPropertyHaveValue(String property, JavaDiagnosticsContext context) {

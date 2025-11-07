@@ -33,6 +33,7 @@ import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -58,19 +59,20 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesScope;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.ls.AbstractTextDocumentService;
 import org.eclipse.lsp4mp.ls.MicroProfileLanguageServer;
 import org.eclipse.lsp4mp.ls.commons.BadLocationException;
 import org.eclipse.lsp4mp.ls.commons.TextDocument;
 import org.eclipse.lsp4mp.ls.commons.ValidatorDelayer;
 import org.eclipse.lsp4mp.ls.commons.client.CommandKind;
-import org.eclipse.lsp4mp.ls.commons.client.ExtendedCompletionCapabilities;
 import org.eclipse.lsp4mp.ls.java.JavaTextDocuments.JavaTextDocument;
 import org.eclipse.lsp4mp.ls.properties.IPropertiesModelProvider;
 import org.eclipse.lsp4mp.model.Node;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.model.Property;
 import org.eclipse.lsp4mp.settings.MicroProfileCodeLensSettings;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
 import org.eclipse.lsp4mp.snippets.JavaSnippetCompletionContext;
@@ -93,7 +95,8 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 	private ValidatorDelayer<JavaTextDocument> validatorDelayer;
 
 	public JavaFileTextDocumentService(MicroProfileLanguageServer microprofileLanguageServer,
-			IPropertiesModelProvider propertiesModelProvider, SharedSettings sharedSettings, JavaTextDocuments javaTextDocuments) {
+			IPropertiesModelProvider propertiesModelProvider, SharedSettings sharedSettings,
+			JavaTextDocuments javaTextDocuments) {
 		super(microprofileLanguageServer, sharedSettings);
 		this.propertiesModelProvider = propertiesModelProvider;
 		this.documents = javaTextDocuments;
@@ -167,8 +170,9 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 				JavaCursorContextResult cursorContext = completionResult.getCursorContext();
 
 				// calculate the snippet completion items based on the context
-				List<CompletionItem> snippetCompletionItems = documents.getSnippetRegistry().getCompletionItems(document, finalizedCompletionOffset,
-						canSupportMarkdown, snippetsSupported, (context, model) -> {
+				List<CompletionItem> snippetCompletionItems = documents.getSnippetRegistry().getCompletionItems(
+						document, finalizedCompletionOffset, canSupportMarkdown, snippetsSupported,
+						(context, model) -> {
 							if (context != null && context instanceof SnippetContextForJava) {
 								return ((SnippetContextForJava) context)
 										.isMatch(new JavaSnippetCompletionContext(projectInfo, cursorContext));
@@ -339,7 +343,7 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 	/**
 	 * Validate the given opened Java file.
 	 *
-	 * @param document                  the opened Java file.
+	 * @param document the opened Java file.
 	 */
 	private void triggerValidationFor(JavaTextDocument document) {
 		document.executeIfInMicroProfileProject((projectinfo, cancelChecker) -> {
@@ -372,8 +376,12 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 		}
 		List<String> excludedUnassignedProperties = sharedSettings.getValidationSettings().getUnassigned()
 				.getExcluded();
+		DiagnosticSeverity validationValueSeverity = sharedSettings.getValidationSettings().getValue()
+				.getDiagnosticSeverity();
+		ExecutionMode executionMode = sharedSettings.getExecutionSettings().getExecutionMode();
 		MicroProfileJavaDiagnosticsParams javaParams = new MicroProfileJavaDiagnosticsParams(uris,
-				new MicroProfileJavaDiagnosticsSettings(excludedUnassignedProperties));
+				new MicroProfileJavaDiagnosticsSettings(excludedUnassignedProperties, validationValueSeverity,
+						executionMode));
 		boolean markdownSupported = sharedSettings.getHoverSettings().isContentFormatSupported(MarkupKind.MARKDOWN);
 		if (markdownSupported) {
 			javaParams.setDocumentFormat(DocumentFormat.Markdown);
@@ -397,6 +405,17 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 			// saved, revalidate all opened java files.
 			triggerValidationForAll(null);
 		}
+	}
+
+	public void updateExecutionSettings(MicroProfileExecutionSettings newExecution) {
+		// Update execution settings
+		MicroProfileExecutionSettings execution = sharedSettings.getExecutionSettings();
+		execution.update(newExecution);
+		// trigger validation for all opened application.properties
+		documents.all().stream().forEach(document -> {
+			triggerValidationFor(document);
+		});
+
 	}
 
 	public void updateValidationSettings(MicroProfileValidationSettings newValidation) {

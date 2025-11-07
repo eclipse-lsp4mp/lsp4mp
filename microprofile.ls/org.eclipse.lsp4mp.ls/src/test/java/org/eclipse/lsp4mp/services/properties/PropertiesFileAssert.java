@@ -14,12 +14,14 @@ import static org.junit.Assert.assertNull;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +65,7 @@ import org.eclipse.lsp4mp.commons.MicroProfilePropertyDocumentationParams;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionData;
 import org.eclipse.lsp4mp.commons.codeaction.MicroProfileCodeActionId;
 import org.eclipse.lsp4mp.commons.metadata.ItemMetadata;
+import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.extensions.ExtendedMicroProfileProjectInfo;
 import org.eclipse.lsp4mp.ls.MockMicroProfilePropertyDefinitionProvider;
 import org.eclipse.lsp4mp.ls.api.MicroProfilePropertyDefinitionProvider;
@@ -76,6 +79,7 @@ import org.eclipse.lsp4mp.ls.commons.snippets.TextDocumentSnippetRegistry;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.settings.MicroProfileCommandCapabilities;
 import org.eclipse.lsp4mp.settings.MicroProfileCompletionCapabilities;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileHoverSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
@@ -114,6 +118,29 @@ public class PropertiesFileAssert {
 			DEFAULT_PROJECT = load(PropertiesFileAssert.class.getResourceAsStream("all-quarkus-properties.json"));
 		}
 		return DEFAULT_PROJECT;
+	}
+
+	// Quarkus project hosts MicroProfile Config implementation (SmallRye Config) in
+	// classpath
+	public static final MicroProfileProjectRuntime QUARKUS_PROJECT_RUNTIME = new MicroProfileProjectRuntime(
+			Set.of(path("quarkus/commons-logging-jboss-logging-1.0.0.Final.jar"), //
+					path("quarkus/jboss-logging-3.6.1.Final.jar"), //
+					path("quarkus/jboss-logmanager-3.1.2.Final.jar"), //
+					path("quarkus/microprofile-config-api-3.1.jar"), //
+					path("quarkus/smallrye-config-3.14.1.jar"), //
+					path("quarkus/smallrye-config-common-3.14.1.jar"), //
+					path("quarkus/smallrye-config-core-3.14.1.jar")));
+
+	// Liberty project doesn't host MicroProfile Config implementation in classpath
+	public static final MicroProfileProjectRuntime LIBERTY_PROJECT_RUNTIME = new MicroProfileProjectRuntime(
+			Collections.emptySet());
+
+	private static String path(String path) {
+		return Paths.get("src/test/resources/classpath", path).toFile().getAbsolutePath();
+	}
+
+	public static ExtendedMicroProfileProjectInfo wrapWithQuarkusProject(MicroProfileProjectInfo info) {
+		return new ExtendedMicroProfileProjectInfo(info, QUARKUS_PROJECT_RUNTIME);
 	}
 
 	public static MicroProfileProjectInfo load(InputStream input) {
@@ -666,10 +693,19 @@ public class PropertiesFileAssert {
 	public static void testDiagnosticsFor(String value, String fileURI, Integer expectedCount,
 			MicroProfileProjectInfo projectInfo, MicroProfileValidationSettings validationSettings,
 			Diagnostic... expected) {
+
+		testDiagnosticsFor(value, fileURI, expectedCount, projectInfo, new MicroProfileExecutionSettings(),
+				validationSettings, expected);
+	}
+
+	public static void testDiagnosticsFor(String value, String fileURI, Integer expectedCount,
+			MicroProfileProjectInfo projectInfo, MicroProfileExecutionSettings executionSettings,
+			MicroProfileValidationSettings validationSettings, Diagnostic... expected) {
 		PropertiesModel model = parse(value, fileURI);
 		PropertiesFileLanguageService languageService = new PropertiesFileLanguageService();
-		List<Diagnostic> actual = languageService.doDiagnostics(model, projectInfo, validationSettings, () -> {
-		});
+		List<Diagnostic> actual = languageService.doDiagnostics(model, projectInfo, executionSettings,
+				validationSettings, () -> {
+				});
 		if (expectedCount != null) {
 			assertEquals(expectedCount.intValue(), actual.size());
 		}

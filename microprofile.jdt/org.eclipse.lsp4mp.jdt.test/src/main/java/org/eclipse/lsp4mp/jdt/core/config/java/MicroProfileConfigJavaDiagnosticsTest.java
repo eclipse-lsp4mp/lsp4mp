@@ -35,12 +35,11 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
 import org.eclipse.lsp4mp.commons.codeaction.MicroProfileCodeActionFactory;
 import org.eclipse.lsp4mp.commons.codeaction.MicroProfileCodeActionId;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.jdt.core.BasePropertiesManagerTest;
 import org.eclipse.lsp4mp.jdt.core.MicroProfileConfigConstants;
-import org.eclipse.lsp4mp.jdt.core.BasePropertiesManagerTest.MicroProfileMavenProjectName;
 import org.eclipse.lsp4mp.jdt.core.utils.IJDTUtils;
 import org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigErrorCode;
-import org.eclipse.lsp4mp.jdt.internal.core.java.validators.JavaASTValidatorRegistry;
 import org.eclipse.lsp4mp.jdt.internal.core.providers.MicroProfileConfigSourceProvider;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,10 +48,9 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 
 	@BeforeClass
 	public static void setupTests() throws Exception {
-		BasePropertiesManagerTest.loadJavaProjects(new String [] {
+		BasePropertiesManagerTest.loadJavaProjects(new String[] { //
 				"maven/" + MicroProfileMavenProjectName.config_quickstart,
-				"maven/" + MicroProfileMavenProjectName.microprofile_configproperties
-				});
+				"maven/" + MicroProfileMavenProjectName.microprofile_configproperties });
 	}
 
 	@Test
@@ -66,29 +64,45 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		Diagnostic d1 = d(8, 53, 58, "'foo' does not match the expected type of 'int'.", DiagnosticSeverity.Error,
+		// Error message like "For input string: \"foo\"" commes from SmallRyeConfig
+		Diagnostic d1 = d(10, 56, 59, "For input string: \"foo\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d2 = d(11, 53, 58, "'bar' does not match the expected type of 'Integer'.", DiagnosticSeverity.Error,
+		Diagnostic d2 = d(13, 56, 59, "For input string: \"bar\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d3 = d(17, 53, 58, "'128' does not match the expected type of 'byte'.", DiagnosticSeverity.Error,
+		Diagnostic d3 = d(19, 56, 59, "Value out of range. Value:\"128\" Radix:10", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
-		Diagnostic d4 = d(32, 27, 38,
+		Diagnostic d4 = d(34, 27, 38,
 				"The property 'greeting9' is not assigned a value in any config file, and must be assigned at runtime.",
 				DiagnosticSeverity.Warning, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.NO_VALUE_ASSIGNED_TO_PROPERTY);
 		setDataForUnassigned("greeting9", d4);
 
-		Diagnostic d5 = d(35, 54, 58, "'AB' does not match the expected type of 'char'.", DiagnosticSeverity.Error,
+		Diagnostic d5 = d(37, 57, 59, "AB can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
+		/*
+		 * Diagnostic d6 = d(52, 83, 86,
+		 * "No enum constant org.acme.config.DefaultValueResource.ProcessingLevel.FOO",
+		 * DiagnosticSeverity.Error,
+		 * MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+		 * MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+		 */
+		Diagnostic d7 = d(58, 62, 67, "Text '00-00' could not be parsed at index 2", DiagnosticSeverity.Error,
+				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
+		Diagnostic d8 = d(64, 65, 70, "java.time.format.DateTimeParseException: Text cannot be parsed to a Duration",
+				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
 		assertJavaDiagnostics(diagnosticsParams, utils, //
-				d1, d2, d3, d4, d5);
+				d1, d2, d3, d4, d5, /* d6, */ d7, d8);
 	}
 
 	@Test
@@ -102,28 +116,33 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		Diagnostic d1 = d(10, 53, 58, "'foo' does not match the expected type of 'List<Integer>'.", DiagnosticSeverity.Error,
+		Diagnostic d1 = d(13, 57, 60, "For input string: \"13X\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d2 = d(19, 53, 65, "'12,13\\,14' does not match the expected type of 'int[]'.", DiagnosticSeverity.Error,
+		Diagnostic d2 = d(19, 57, 60, "For input string: \"13X\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d3 = d(31, 53, 60, "'AB,CD' does not match the expected type of 'char[]'.", DiagnosticSeverity.Error,
+		Diagnostic d3 = d(22, 57, 60, "For input string: \"13\\\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d4 = d(34, 53, 59, "',,,,' does not match the expected type of 'char[]'.", DiagnosticSeverity.Error,
+		Diagnostic d4 = d(34, 54, 56, "AB can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d5 = d(37, 54, 56, "'defaultValue=\"\"' will behave as if no default value is set, and will not be treated as an empty 'List<String>'.", DiagnosticSeverity.Warning,
+		Diagnostic d5 = d(34, 57, 59, "CD can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
+		Diagnostic d6 = d(40, 54, 56,
+				"'defaultValue=\"\"' will behave as if no default value is set, and will not be treated as an empty 'List<String>'.",
+				DiagnosticSeverity.Warning, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.EMPTY_LIST_NOT_SUPPORTED);
 
 		assertJavaDiagnostics(diagnosticsParams, utils, //
-				d1, d2, d3, d4, d5);
+				d1, d2, d3, d4, d5, d6);
 	}
 
 	@Test
@@ -134,33 +153,61 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		MicroProfileJavaDiagnosticsParams diagnosticsParams = new MicroProfileJavaDiagnosticsParams();
 		IFile javaFile = javaProject.getProject()
 				.getFile(new Path("src/main/java/org/acme/config/DefaultValueResource.java"));
-		diagnosticsParams.setSettings(new MicroProfileJavaDiagnosticsSettings(Arrays.asList("greeting?")));
+		diagnosticsParams.setSettings(new MicroProfileJavaDiagnosticsSettings(Arrays.asList("greeting?"),
+				DiagnosticSeverity.Error, ExecutionMode.SAFE));
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		Diagnostic d1 = d(8, 53, 58, "'foo' does not match the expected type of 'int'.", DiagnosticSeverity.Error,
+		// Error message like "For input string: \"foo\"" commes from SmallRyeConfig
+		Diagnostic d1 = d(10, 56, 59, "For input string: \"foo\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d2 = d(11, 53, 58, "'bar' does not match the expected type of 'Integer'.", DiagnosticSeverity.Error,
+		Diagnostic d2 = d(13, 56, 59, "For input string: \"bar\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d3 = d(17, 53, 58, "'128' does not match the expected type of 'byte'.", DiagnosticSeverity.Error,
+		Diagnostic d3 = d(19, 56, 59, "Value out of range. Value:\"128\" Radix:10", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d4 = d(35, 54, 58, "'AB' does not match the expected type of 'char'.", DiagnosticSeverity.Error,
+		/*
+		 * Diagnostic d4 = d(34, 27, 38,
+		 * "The property 'greeting9' is not assigned a value in any config file, and must be assigned at runtime."
+		 * , DiagnosticSeverity.Warning,
+		 * MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+		 * MicroProfileConfigErrorCode.NO_VALUE_ASSIGNED_TO_PROPERTY);
+		 * setDataForUnassigned("greeting9", d4);
+		 */
+
+		Diagnostic d5 = d(37, 57, 59, "AB can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
+		/*
+		 * Diagnostic d6 = d(52, 83, 86,
+		 * "No enum constant org.acme.config.DefaultValueResource.ProcessingLevel.FOO",
+		 * DiagnosticSeverity.Error,
+		 * MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+		 * MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+		 */
+		Diagnostic d7 = d(58, 62, 67, "Text '00-00' could not be parsed at index 2", DiagnosticSeverity.Error,
+				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
+		Diagnostic d8 = d(64, 65, 70, "java.time.format.DateTimeParseException: Text cannot be parsed to a Duration",
+				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
 		assertJavaDiagnostics(diagnosticsParams, utils, //
-				d1, d2, d3, d4);
+				d1, d2, d3, d5, /* d6, */ d7, d8);
+
 	}
 
 	@Test
 	public void unassignedWithConfigProperties() throws Exception {
-		IJavaProject javaProject = ProjectUtils.getJavaProject(MicroProfileMavenProjectName.microprofile_configproperties);
+		IJavaProject javaProject = ProjectUtils
+				.getJavaProject(MicroProfileMavenProjectName.microprofile_configproperties);
 		IJDTUtils utils = JDT_UTILS;
 
 		MicroProfileJavaDiagnosticsParams diagnosticsParams = new MicroProfileJavaDiagnosticsParams();
@@ -211,16 +258,20 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 
 		MicroProfileJavaCodeActionParams codeActionParams1 = createCodeActionParams(javaUri, d1, false);
 		assertJavaCodeAction(codeActionParams1, utils, //
-				ca(javaUri, "Insert 'defaultValue' attribute", MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d1, //
+				ca(javaUri, "Insert 'defaultValue' attribute",
+						MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d1, //
 						te(8, 29, 8, 29, ", defaultValue = \"\"")),
-				ca(propertiesUri, "Insert 'foo' property in 'META-INF/microprofile-config.properties'", MicroProfileCodeActionId.AssignValueToProperty, d1, //
+				ca(propertiesUri, "Insert 'foo' property in 'META-INF/microprofile-config.properties'",
+						MicroProfileCodeActionId.AssignValueToProperty, d1, //
 						te(0, 0, 0, 0, "foo=\r\n")));
 
 		MicroProfileJavaCodeActionParams codeActionParams2 = createCodeActionParams(javaUri, d2, false);
 		assertJavaCodeAction(codeActionParams2, utils, //
-				ca(javaUri, "Insert 'defaultValue' attribute", MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d2, //
+				ca(javaUri, "Insert 'defaultValue' attribute",
+						MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d2, //
 						te(14, 30, 14, 30, ", defaultValue = \"\"")),
-				ca(propertiesUri, "Insert 'server.url' property in 'META-INF/microprofile-config.properties'", MicroProfileCodeActionId.AssignValueToProperty, d2, //
+				ca(propertiesUri, "Insert 'server.url' property in 'META-INF/microprofile-config.properties'",
+						MicroProfileCodeActionId.AssignValueToProperty, d2, //
 						te(0, 0, 0, 0, "server.url=\r\n")));
 
 		// Same code actions but with exclude
@@ -239,7 +290,8 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		codeActionParams1_1.setCommandConfigurationUpdateSupported(true);
 		assertJavaCodeAction(codeActionParams1_1, utils, //
 				MicroProfileCodeActionFactory.createAddToUnassignedExcludedCodeAction("foo", d1_1),
-				ca(javaUri, "Insert 'defaultValue' attribute", MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d1_1, //
+				ca(javaUri, "Insert 'defaultValue' attribute",
+						MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d1_1, //
 						te(8, 29, 8, 29, ", defaultValue = \"\"")),
 				ca(propertiesUri, "Insert 'foo' property in 'META-INF/microprofile-config.properties'",
 						MicroProfileCodeActionId.AssignValueToProperty, d1_1, //
@@ -249,16 +301,19 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		codeActionParams2_1.setCommandConfigurationUpdateSupported(true);
 		assertJavaCodeAction(codeActionParams2_1, utils, //
 				MicroProfileCodeActionFactory.createAddToUnassignedExcludedCodeAction("server.url", d2_1),
-				ca(javaUri, "Insert 'defaultValue' attribute", MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d2_1, //
+				ca(javaUri, "Insert 'defaultValue' attribute",
+						MicroProfileCodeActionId.ConfigPropertyInsertDefaultValue, d2_1, //
 						te(14, 30, 14, 30, ", defaultValue = \"\"")),
-				ca(propertiesUri, "Insert 'server.url' property in 'META-INF/microprofile-config.properties'", MicroProfileCodeActionId.AssignValueToProperty, d2_1, //
+				ca(propertiesUri, "Insert 'server.url' property in 'META-INF/microprofile-config.properties'",
+						MicroProfileCodeActionId.AssignValueToProperty, d2_1, //
 						te(0, 0, 0, 0, "server.url=\r\n")));
 
 	}
 
 	@Test
 	public void emptyNameKeyValue() throws Exception {
-		IJavaProject javaProject = ProjectUtils.getJavaProject(MicroProfileMavenProjectName.microprofile_configproperties);
+		IJavaProject javaProject = ProjectUtils
+				.getJavaProject(MicroProfileMavenProjectName.microprofile_configproperties);
 		IJDTUtils utils = JDT_UTILS;
 
 		MicroProfileJavaDiagnosticsParams diagnosticsParams = new MicroProfileJavaDiagnosticsParams();

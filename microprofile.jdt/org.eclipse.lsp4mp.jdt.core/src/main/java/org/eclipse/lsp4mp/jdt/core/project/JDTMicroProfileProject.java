@@ -25,10 +25,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.JavaProject;
+import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.commons.utils.ConfigSourcePropertiesProviderUtils;
 import org.eclipse.lsp4mp.commons.utils.IConfigSourcePropertiesProvider;
 import org.eclipse.lsp4mp.commons.utils.PropertyValueExpander;
@@ -48,7 +51,8 @@ public class JDTMicroProfileProject {
 
 	private static final Logger LOGGER = Logger.getLogger(JDTMicroProfileProject.class.getName());
 
-	private IJavaProject javaProject;
+	private final IJavaProject javaProject;
+	private MicroProfileProjectRuntime projectRuntime;
 
 	private List<IConfigSource> configSources;
 
@@ -57,6 +61,7 @@ public class JDTMicroProfileProject {
 
 	public JDTMicroProfileProject(IJavaProject javaProject) {
 		this.javaProject = javaProject;
+
 	}
 
 	/**
@@ -303,6 +308,66 @@ public class JDTMicroProfileProject {
 					.layer(new ConfigSourcePropertiesProvider(configSources.get(i)), provider);
 		}
 		return provider;
+	}
+
+	public MicroProfileProjectRuntime getProjectRuntime() {
+		if (projectRuntime == null) {
+			try {
+				Set<String> classpath = resolveClasspathJars(javaProject);
+				projectRuntime = new MicroProfileProjectRuntime(classpath);
+			} catch (Exception e) {
+				LOGGER.log(Level.SEVERE, "Error while loading project runtime", e);
+			}
+		}
+		return projectRuntime;
+	}
+
+	private static Set<String> resolveClasspathJars(IJavaProject javaProject) throws JavaModelException {
+		Set<String> result = new HashSet<>();
+
+		// We ask JDT for the *resolved* classpath (includes Maven/Gradle dependencies)
+		IClasspathEntry[] entries = ((JavaProject) javaProject).getResolvedClasspath();
+
+		for (IClasspathEntry entry : entries) {
+			switch (entry.getEntryKind()) {
+
+			case IClasspathEntry.CPE_LIBRARY:
+				// Regular JAR dependency or JRE libs
+				addPath(entry.getPath(), result);
+				break;
+
+			case IClasspathEntry.CPE_VARIABLE:
+				// Linked variable (ex: M2_REPO)
+				// IPath resolved = JavaCore.getResolvedVariablePath(entry.getPath());
+				// addPath(resolved, result);
+				break;
+
+			case IClasspathEntry.CPE_SOURCE:
+				// We include compiled output folder (target/classes or bin/)
+				IPath output = entry.getOutputLocation();
+				if (output == null) {
+					output = javaProject.getOutputLocation();
+				}
+				if (output != null) {
+					IProject project = javaProject.getProject();
+					IPath absoluteOutput = project.getWorkspace().getRoot().getFolder(output).getLocation();
+					addPath(absoluteOutput, result);
+				}
+				break;
+
+			default:
+				// ignore project references for now
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	private static void addPath(IPath path, Set<String> result) {
+		if (path != null) {
+			result.add(path.toFile().getAbsolutePath());
+		}
 	}
 
 }

@@ -51,6 +51,7 @@ import org.eclipse.lsp4mp.services.properties.PropertiesFileLanguageService;
 import org.eclipse.lsp4mp.settings.AllMicroProfileSettings;
 import org.eclipse.lsp4mp.settings.InitializationOptionsSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileCodeLensSettings;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileExtensionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileGeneralClientSettings;
@@ -146,6 +147,10 @@ public class MicroProfileLanguageServer implements LanguageServer, ProcessLangua
 			MicroProfileSymbolSettings newSymbols = clientSettings.getSymbols();
 			if (newSymbols != null) {
 				textDocumentService.updateSymbolSettings(newSymbols);
+			}
+			MicroProfileExecutionSettings newExecution = clientSettings.getExecution();
+			if (newExecution != null) {
+				textDocumentService.updateExecutionSettings(newExecution);
 			}
 			MicroProfileValidationSettings newValidation = clientSettings.getValidation();
 			if (newValidation != null) {

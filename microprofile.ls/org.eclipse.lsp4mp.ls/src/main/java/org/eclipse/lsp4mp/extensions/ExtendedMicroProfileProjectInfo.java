@@ -27,6 +27,7 @@ import org.eclipse.lsp4mp.commons.metadata.ItemBase;
 import org.eclipse.lsp4mp.commons.metadata.ItemHint;
 import org.eclipse.lsp4mp.commons.metadata.ItemMetadata;
 import org.eclipse.lsp4mp.commons.metadata.ValueHint;
+import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 
 /**
@@ -65,17 +66,25 @@ public class ExtendedMicroProfileProjectInfo extends MicroProfileProjectInfo {
 		}
 	}
 
-	private boolean reloadFromSource;
+	private final transient MicroProfileProjectRuntime projectRuntime;
 
-	private List<ItemMetadata> dynamicProperties;
+	private transient boolean reloadFromSource;
 
-	private final Function<String, ItemHint> getHint = hint -> getHint(hint);
+	private transient List<ItemMetadata> dynamicProperties;
 
-	private final List<ItemMetadataProvider> providers;
+	private transient final Function<String, ItemHint> getHint = hint -> getHint(hint);
 
-	private boolean updating;
+	private transient final List<ItemMetadataProvider> providers;
+
+	private transient boolean updating;
 
 	public ExtendedMicroProfileProjectInfo(MicroProfileProjectInfo delegate) {
+		this(delegate, null);
+	}
+
+	public ExtendedMicroProfileProjectInfo(MicroProfileProjectInfo delegate,
+			MicroProfileProjectRuntime projectRuntime) {
+		this.projectRuntime = projectRuntime;
 		super.setProjectURI(delegate.getProjectURI());
 		// Update hints
 		super.setHints(
@@ -194,6 +203,10 @@ public class ExtendedMicroProfileProjectInfo extends MicroProfileProjectInfo {
 			return;
 		}
 		synchUpdateCustomProperties(document);
+	}
+
+	public MicroProfileProjectRuntime getProjectRuntime() {
+		return projectRuntime;
 	}
 
 	private synchronized void synchUpdateCustomProperties(PropertiesModel document) {

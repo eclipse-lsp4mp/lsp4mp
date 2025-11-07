@@ -33,9 +33,11 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaElementDelta;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesScope;
 import org.eclipse.lsp4mp.jdt.core.IMicroProfilePropertiesChangedListener;
+import org.eclipse.lsp4mp.jdt.core.project.JDTMicroProfileProject;
 import org.eclipse.lsp4mp.jdt.core.project.JDTMicroProfileProjectManager;
 import org.eclipse.lsp4mp.jdt.core.utils.JDTMicroProfileUtils;
 
@@ -104,6 +106,15 @@ public class MicroProfilePropertiesListenerManager {
 					}
 					IJavaProject project = (IJavaProject) element;
 					event.getProjectURIs().add(JDTMicroProfileUtils.getProjectURI(project));
+					try {
+						JDTMicroProfileProject mpProject = JDTMicroProfileProjectManager.getInstance()
+								.getJDTMicroProfileProject(project);
+						if (mpProject != null && mpProject.getProjectRuntime() != null) {
+							mpProject.getProjectRuntime().clearProjectClassCache();
+						}
+					} catch (JavaModelException e) {
+
+					}
 				}
 				break;
 			default:
@@ -159,6 +170,11 @@ public class MicroProfilePropertiesListenerManager {
 					event.setType(MicroProfilePropertiesScope.ONLY_SOURCES);
 					event.setProjectURIs(new HashSet<String>());
 					event.getProjectURIs().add(JDTMicroProfileUtils.getProjectURI(file.getProject()));
+					JDTMicroProfileProject mpProject = JDTMicroProfileProjectManager.getInstance()
+							.getJDTMicroProfileProject(file);
+					if (mpProject != null && mpProject.getProjectRuntime() != null) {
+						mpProject.getProjectRuntime().clearProjectClassCache();
+					}
 					fireAsyncEvent(event);
 				} else if (isConfigSource(file) && isFileContentChanged(delta)) {
 					MicroProfilePropertiesChangeEvent event = new MicroProfilePropertiesChangeEvent();

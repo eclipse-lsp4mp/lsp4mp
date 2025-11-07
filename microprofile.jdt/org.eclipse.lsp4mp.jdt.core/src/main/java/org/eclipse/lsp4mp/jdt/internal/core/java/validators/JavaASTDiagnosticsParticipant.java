@@ -13,7 +13,6 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.internal.core.java.validators;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -41,17 +40,15 @@ public class JavaASTDiagnosticsParticipant implements IJavaDiagnosticsParticipan
 	@Override
 	public List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor)
 			throws CoreException {
-		List<Diagnostic> diagnostics = new ArrayList<>();
-		collectDiagnosticsInFile(context, diagnostics, monitor);
-		return diagnostics;
+		collectDiagnosticsInFile(context, monitor);
+		return context.getDiagnostics();
 	}
 
-	private static void collectDiagnosticsInFile(JavaDiagnosticsContext context, List<Diagnostic> diagnostics,
-			IProgressMonitor monitor) throws JavaModelException {
+	private static void collectDiagnosticsInFile(JavaDiagnosticsContext context, IProgressMonitor monitor)
+			throws JavaModelException {
 		// Collect the list of JavaASTValidator which are adapted for the current AST
 		// compilation unit to validate.
-		Collection<ASTVisitor> validators = JavaASTValidatorRegistry.getInstance().getValidators(context, diagnostics,
-				monitor);
+		Collection<ASTVisitor> validators = JavaASTValidatorRegistry.getInstance().getValidators(context, monitor);
 		if (!validators.isEmpty()) {
 			// Visit the AST compilation unit and process each validator.
 			CompilationUnit ast = context.getASTRoot();

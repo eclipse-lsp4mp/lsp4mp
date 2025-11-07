@@ -55,7 +55,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
-import org.eclipse.lsp4mp.commons.utils.JSONUtility;
 import org.eclipse.lsp4mp.ls.AbstractTextDocumentService;
 import org.eclipse.lsp4mp.ls.MicroProfileLanguageServer;
 import org.eclipse.lsp4mp.ls.api.MicroProfileLanguageServerAPI.JsonSchemaForProjectInfo;
@@ -65,6 +64,7 @@ import org.eclipse.lsp4mp.ls.commons.ValidatorDelayer;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.services.properties.CompletionData;
 import org.eclipse.lsp4mp.services.properties.PropertiesFileLanguageService;
+import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileSymbolSettings;
@@ -72,9 +72,6 @@ import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
 import org.eclipse.lsp4mp.utils.JSONSchemaUtils;
 import org.eclipse.lsp4mp.utils.URIUtils;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 /**
  * LSP text document service for 'microprofile-config.properties',
@@ -180,7 +177,8 @@ public class PropertiesFileTextDocumentService extends AbstractTextDocumentServi
 			// then return hover by using the MicroProfile project information and the
 			// Properties model document
 			return getPropertiesFileLanguageService().doHover(document, params.getPosition(), projectInfo,
-					sharedSettings.getHoverSettings(), this.microprofileLanguageServer.getLanguageClient(), cancelChecker);
+					sharedSettings.getHoverSettings(), this.microprofileLanguageServer.getLanguageClient(),
+					cancelChecker);
 		});
 	}
 
@@ -344,8 +342,9 @@ public class PropertiesFileTextDocumentService extends AbstractTextDocumentServi
 			return CompletableFuture.completedFuture(null);
 		}
 
+		SharedSettings sharedSettings = getSharedSettings();
 		List<Diagnostic> diagnostics = getPropertiesFileLanguageService().doDiagnostics(propertiesModel, projectInfo,
-				getSharedSettings().getValidationSettings(), cancelChecker);
+				sharedSettings.getExecutionSettings(), sharedSettings.getValidationSettings(), cancelChecker);
 		cancelChecker.checkCanceled();
 		microprofileLanguageServer.getLanguageClient()
 				.publishDiagnostics(new PublishDiagnosticsParams(propertiesModel.getDocumentURI(), diagnostics));
@@ -398,6 +397,16 @@ public class PropertiesFileTextDocumentService extends AbstractTextDocumentServi
 		symbolSettings.setShowAsTree(newSettings.isShowAsTree());
 	}
 
+	public void updateExecutionSettings(MicroProfileExecutionSettings newExecution) {
+		// Update execution settings
+		MicroProfileExecutionSettings execution= sharedSettings.getExecutionSettings();
+		execution.update(newExecution);
+		// trigger validation for all opened application.properties
+		documents.all().stream().forEach(document -> {
+			triggerValidationFor(document);
+		});
+	}
+	
 	public void updateValidationSettings(MicroProfileValidationSettings newValidation) {
 		// Update validation settings
 		MicroProfileValidationSettings validation = sharedSettings.getValidationSettings();

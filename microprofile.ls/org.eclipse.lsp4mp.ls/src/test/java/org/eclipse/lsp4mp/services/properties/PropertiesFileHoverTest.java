@@ -85,7 +85,7 @@ public class PropertiesFileHoverTest {
 		hoverLabel = "**quarkus.log.syslog.async.overflow**" + System.lineSeparator() + System.lineSeparator() + //
 				"Determine whether to block the publisher (rather than drop the message) when the queue is full"
 				+ System.lineSeparator() + System.lineSeparator() + //
-				" * Type: `org.jboss.logmanager.handlers.AsyncHandler.OverflowAction`" + System.lineSeparator() + //
+				" * Type: `org.jboss.logmanager.handlers.AsyncHandler$OverflowAction`" + System.lineSeparator() + //
 				" * Default: `block`" + System.lineSeparator() + //
 				" * Value: `DISCARD`" + System.lineSeparator() + //
 				" * Phase: `runtime`" + System.lineSeparator() + //
@@ -99,7 +99,7 @@ public class PropertiesFileHoverTest {
 		String hoverLabel = "**quarkus.log.syslog.async.overflow**" + System.lineSeparator() + System.lineSeparator() + //
 				"Determine whether to block the publisher (rather than drop the message) when the queue is full"
 				+ System.lineSeparator() + System.lineSeparator() + //
-				" * Type: `org.jboss.logmanager.handlers.AsyncHandler.OverflowAction`" + System.lineSeparator() + //
+				" * Type: `org.jboss.logmanager.handlers.AsyncHandler$OverflowAction`" + System.lineSeparator() + //
 				" * Default: `block`" + System.lineSeparator() + //
 				" * Value: `DISCARD`" + System.lineSeparator() + //
 				" * Phase: `runtime`" + System.lineSeparator() + //

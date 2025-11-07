@@ -34,6 +34,7 @@ public class MicroProfileGeneralClientSettings {
 
 	private MicroProfileSymbolSettings symbols;
 
+	private MicroProfileExecutionSettings execution;
 	private MicroProfileValidationSettings validation;
 
 	private MicroProfileFormattingSettings formatting;
@@ -58,6 +59,24 @@ public class MicroProfileGeneralClientSettings {
 	 */
 	public void setSymbols(MicroProfileSymbolSettings symbols) {
 		this.symbols = symbols;
+	}
+
+	/**
+	 * Returns the execution settings.
+	 *
+	 * @return the execution settings.
+	 */
+	public MicroProfileExecutionSettings getExecution() {
+		return execution;
+	}
+
+	/**
+	 * Set the execution settings.
+	 *
+	 * @param execution the execution settings.
+	 */
+	public void setExecution(MicroProfileExecutionSettings execution) {
+		this.execution = execution;
 	}
 
 	/**

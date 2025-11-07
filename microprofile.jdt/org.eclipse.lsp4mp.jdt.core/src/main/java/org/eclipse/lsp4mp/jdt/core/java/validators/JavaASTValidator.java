@@ -13,19 +13,12 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.core.java.validators;
 
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IOpenable;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.IJavaErrorCode;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.JavaDiagnosticsContext;
 
@@ -56,10 +49,6 @@ import org.eclipse.lsp4mp.jdt.core.java.diagnostics.JavaDiagnosticsContext;
  */
 public class JavaASTValidator extends ASTVisitor {
 
-	private static final Logger LOGGER = Logger.getLogger(JavaASTValidator.class.getName());
-
-	private List<Diagnostic> diagnostics;
-
 	private JavaDiagnosticsContext context;
 
 	/**
@@ -68,9 +57,8 @@ public class JavaASTValidator extends ASTVisitor {
 	 * @param context     the context.
 	 * @param diagnostics the diagnostics to update.
 	 */
-	public void initialize(JavaDiagnosticsContext context, List<Diagnostic> diagnostics) {
+	public void initialize(JavaDiagnosticsContext context) {
 		this.context = context;
-		this.diagnostics = diagnostics;
 	}
 
 	/**
@@ -100,20 +88,21 @@ public class JavaASTValidator extends ASTVisitor {
 
 	public Diagnostic addDiagnostic(String message, String source, int offset, int length, IJavaErrorCode code,
 			DiagnosticSeverity severity) {
-		try {
-			String fileUri = context.getUri();
-			IOpenable openable = context.getTypeRoot();
-			Range range = context.getUtils().toRange(openable, offset, length);
-			Diagnostic d = context.createDiagnostic(fileUri, message, range, source, code, severity);
-			diagnostics.add(d);
-			return d;
-		} catch (JavaModelException e) {
-			LOGGER.log(Level.SEVERE, "Error while creating diagnostic '" + message + "'.", e);
-			return null;
-		}
+		return addDiagnostic(message, source, offset, length, code != null ? code.getCode() : null, severity);
+	}
+
+	public Diagnostic addDiagnostic(String message, String source, int offset, int length, String code,
+			DiagnosticSeverity severity) {
+		return context.addDiagnostic(message, source, offset, length, code, severity);
+	}
+
+	public Diagnostic addDiagnostic(String message, String source, ASTNode node, String code,
+			DiagnosticSeverity severity, int start, int end) {
+		return addDiagnostic(message, source, node.getStartPosition() + start, end, code, severity);
 	}
 
 	public JavaDiagnosticsContext getContext() {
 		return context;
 	}
+
 }
