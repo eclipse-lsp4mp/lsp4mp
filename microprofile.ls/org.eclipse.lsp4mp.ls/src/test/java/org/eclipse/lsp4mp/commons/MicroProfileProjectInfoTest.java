@@ -73,27 +73,41 @@ public class MicroProfileProjectInfoTest {
 	}
 
 	@Test
-	public void getPropertyMapWithOneKey() {
+	public void getPropertyMapWithOneKey_valueQuotted() {
 		MicroProfileProjectInfo info = getDefaultMicroProfileProjectInfo();
 		PropertyInfo property = getProperty("quarkus.log.category.\"com.lordofthejars\".level", info);
-
-		assertNotNull(property);
-		assertNotNull(property.getProperty());
-		assertEquals("quarkus.log.category.{*}.level", property.getProperty().getName());
-
-		property = getProperty("quarkus.log.category.com.level", info);
-
-		assertNotNull(property);
-		assertNotNull(property.getProperty());
-		assertEquals("quarkus.log.category.{*}.level", property.getProperty().getName());
-
-		property = getProperty("quarkus.log.category.com\\\\.lordofthejars.level", info);
-
 		assertNotNull(property);
 		assertNotNull(property.getProperty());
 		assertEquals("quarkus.log.category.{*}.level", property.getProperty().getName());
 	}
 
+	@Test
+	public void getPropertyMapWithOneKey_valueSimple() {
+		MicroProfileProjectInfo info = getDefaultMicroProfileProjectInfo();
+		PropertyInfo property = getProperty("quarkus.log.category.com.level", info);
+		assertNotNull(property);
+		assertNotNull(property.getProperty());
+		assertEquals("quarkus.log.category.{*}.level", property.getProperty().getName());
+	}
+
+	@Test
+	public void getPropertyMapWithOneKey_valueAntiSlash() {
+		MicroProfileProjectInfo info = getDefaultMicroProfileProjectInfo();
+		PropertyInfo property = getProperty("quarkus.log.category.com\\\\.lordofthejars.level", info);
+		assertNotNull(property);
+		assertNotNull(property.getProperty());
+		assertEquals("quarkus.log.category.{*}.level", property.getProperty().getName());
+	}
+
+	@Test
+	public void getPropertyMapWithOneKey_valueNone() {
+		MicroProfileProjectInfo info = getDefaultMicroProfileProjectInfo();
+		PropertyInfo property = getProperty("quarkus.log.category.level", info);
+		assertNotNull(property);
+		assertNotNull(property.getProperty());
+		assertEquals("quarkus.log.category.{*}.level", property.getProperty().getName());
+	}
+	
 	@Test
 	@Ignore("Ignore this test since quarkus.keycloak.policy-enforcer.claim-information-point.{*}.{*}.{*} no longer exists")
 	public void getPropertyMapWithThreeKeys() {
