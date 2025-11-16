@@ -59,6 +59,8 @@ public class ItemMetadata extends ItemBase {
 	private boolean required;
 	private int phase;
 
+	private transient List<String> wildcardExpansions;
+
 	private List<ConverterKind> converterKinds;
 
 	public String getType() {
@@ -123,6 +125,42 @@ public class ItemMetadata extends ItemBase {
 
 	public void setConverterKinds(List<ConverterKind> converterKinds) {
 		this.converterKinds = converterKinds;
+	}
+
+	/**
+	 * Returns all possible expansions of the property name pattern contained in
+	 * this metadata.
+	 * <p>
+	 * Each block delimited by curly braces "{...}" or square brackets "[...]" is
+	 * treated as a wildcard. For example, a pattern like
+	 * "quarkus.log.category.{*}.level" could produce variants such as:
+	 * <ul>
+	 * <li>"quarkus.log.category.{*}.level"</li>
+	 * <li>"quarkus.log.category.level"</li>
+	 * </ul>
+	 * This allows matching property names with or without specific segments,
+	 * handling multiple wildcards and combinations efficiently.
+	 *
+	 * @return a list of all expanded property name variants, or {@code null} if not
+	 *         computed yet
+	 */
+	public List<String> getWildcardExpansions() {
+		return wildcardExpansions;
+	}
+
+	/**
+	 * Sets the cached expansions for the property name pattern contained in this
+	 * metadata.
+	 * <p>
+	 * This should be used to store the results of {@link #expandPatterns(String)}
+	 * or similar logic that generates all combinations of wildcards in the pattern.
+	 * Caching the expansions avoids recomputing them multiple times for the same
+	 * metadata.
+	 *
+	 * @param expansions the list of expanded property name variants to cache
+	 */
+	public void setWildcardExpansions(List<String> expansions) {
+		this.wildcardExpansions = expansions;
 	}
 
 	public boolean isStringType() {

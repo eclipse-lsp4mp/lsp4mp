@@ -14,7 +14,9 @@
 package org.eclipse.lsp4mp.utils;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
@@ -186,7 +188,7 @@ public class PropertiesFileUtils {
 		}
 		Collection<ItemMetadata> properties = info.getProperties();
 		for (ItemMetadata property : properties) {
-			if (property != null && match(propertyName, property.getName())) {
+			if (property != null && match(propertyName, property)) {
 				return property;
 			}
 		}
@@ -204,6 +206,29 @@ public class PropertiesFileUtils {
 			}
 		}
 		return null;
+	}
+
+	private static boolean match(String propertyName, ItemMetadata metadata) {
+		String rawPattern = metadata.getName();
+		if (rawPattern.indexOf('{') != -1 || rawPattern.indexOf('[') != -1) {
+			// Example of expansion:
+			// Pattern: quarkus.log.category.{*}.level
+			// expandPatterns(pattern) -> [
+			// "quarkus.log.category.{*}.level",
+			// "quarkus.log.category.level"
+			// ]
+			List<String> patterns = metadata.getWildcardExpansions();
+			if (patterns == null) {
+				patterns = expandPatterns(rawPattern);
+				metadata.setWildcardExpansions(patterns);
+			}
+			for (String expanded : patterns) {
+				if (match(propertyName, expanded)) {
+					return true;
+				}
+			}
+		}
+		return match(propertyName, rawPattern);
 	}
 
 	/**
@@ -273,6 +298,106 @@ public class PropertiesFileUtils {
 			return '\u0000';
 		}
 		return text.charAt(index);
+	}
+
+	/**
+	 * Generates all possible variants of a pattern containing the wildcards
+	 * {@code "{*}"} or {@code "[*]"}.
+	 * Each wildcard can be either kept or removed, producing 2^n combinations
+	 * for n wildcards. When removing a wildcard, any dot immediately to the left
+	 * of it is also removed.
+	 *
+	 * <p><b>Example:</b></p>
+	 * <pre>
+	 * Input : {@code foo.{*}.bar.[*].baz}
+	 * Output: [
+	 *   {@code foo.{*}.bar.[*].baz},
+	 *   {@code foo.bar.[*].baz},
+	 *   {@code foo.{*}.bar.baz},
+	 *   {@code foo.bar.baz}
+	 * ]
+	 * </pre>
+	 *
+	 * <p><b>Quarkus example:</b></p>
+	 * <pre>
+	 * Input : {@code quarkus.log.category.{*}.level}
+	 * Output: [
+	 *   {@code quarkus.log.category.{*}.level},
+	 *   {@code quarkus.log.category.level}
+	 * ]
+	 * </pre>
+	 *
+	 * <p>Notes:</p>
+	 * <ul>
+	 *   <li>Only {@code "{*}"} and {@code "[*]"} are recognized as wildcards.</li>
+	 * </ul>
+	 */
+	private static List<String> expandPatterns(String pattern) {
+		List<int[]> wildcards = new ArrayList<>();
+		int len = pattern.length();
+
+		// detect all {...} and [...] blocks
+		for (int i = 0; i < len; i++) {
+			char c = pattern.charAt(i);
+			if (c == '{' || c == '[') {
+				char close = (c == '{') ? '}' : ']';
+				int start = i;
+				int end = i + 1;
+				// find the closing bracket
+				while (end < len && pattern.charAt(end) != close) {
+					end++;
+				}
+				if (end < len && pattern.charAt(end) == close) {
+					wildcards.add(new int[] { start, end });
+					i = end; // skip processed block
+				}
+			}
+		}
+
+		if (wildcards.isEmpty()) {
+			return Collections.singletonList(pattern);
+		}
+
+		List<String> result = new ArrayList<>();
+		int combos = 1 << wildcards.size(); // 2^n combinations
+
+		// generate all combinations
+		for (int mask = 0; mask < combos; mask++) {
+			StringBuilder sb = new StringBuilder(len);
+			int lastPos = 0;
+
+			for (int w = 0; w < wildcards.size(); w++) {
+				int[] wc = wildcards.get(w);
+				int start = wc[0];
+				int end = wc[1] + 1; // inclusive
+
+				// append before wildcard
+				if (lastPos < start) {
+					sb.append(pattern, lastPos, start);
+				}
+
+				if (((mask >> w) & 1) == 0) {
+					// keep wildcard
+					sb.append(pattern, start, end);
+				} else {
+					// remove wildcard and optional dot before
+					if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '.') {
+						sb.setLength(sb.length() - 1);
+					}
+				}
+
+				lastPos = end;
+			}
+
+			// append remaining part
+			if (lastPos < len) {
+				sb.append(pattern, lastPos, len);
+			}
+
+			result.add(sb.toString());
+		}
+
+		return result;
 	}
 
 	public static String formatPropertyForMarkdown(String propertyName) {
