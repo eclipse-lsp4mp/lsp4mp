@@ -48,6 +48,19 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractConverterRuntimeSupport.class.getName());
 
+	private static final ConverterValidator NULL_CONVERTER = new ConverterValidator() {
+
+		@Override
+		public void validate(String value, int start, DiagnosticsCollector collector) {
+			// Do nothing
+		}
+
+		@Override
+		public boolean canValidate() {
+			return false;
+		}
+	};
+
 	private T config;
 	private boolean initialized;
 
@@ -67,7 +80,7 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 			}
 			// Get or prepare the converter invoker
 			ConverterValidator validator = converterCache.computeIfAbsent(type,
-					t -> resolveConverter(getProject().findClassType(t), cfg));
+					t -> resolveConverter(getProject().findClassType(t, getExecutionMode()), cfg));
 			if (validator.canValidate()) {
 				validator.validate(value, collector);
 			}
@@ -127,6 +140,9 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	 *         given type
 	 */
 	protected ConverterValidator resolveConverter(Type type, T config) {
+		if (type == null) {
+			return NULL_CONVERTER;
+		}
 		Class rawType = rawTypeOf(type);
 		if (type instanceof ParameterizedType) {
 			Type[] typeArgs = ((ParameterizedType) type).getActualTypeArguments();
@@ -152,8 +168,10 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 		} else if (rawType != null && rawType.isArray()) {
 			return newCollectionConverter(resolveConverter(rawType.getComponentType(), config));
 		}
-
-		return newConverter(config, type);
+		if (!(type instanceof Class)) {
+			return NULL_CONVERTER;
+		}
+		return newConverter(config, (Class) type);
 	}
 
 	private static ConverterValidator newOptionalConverter(ConverterValidator converter) {
@@ -243,7 +261,7 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 		}
 	}
 
-	protected abstract ConverterValidator newConverter(T config, Type type);
+	protected abstract ConverterValidator newConverter(T config, Class<?> type);
 
 	protected abstract T loadConfig();
 

@@ -48,14 +48,14 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 	 * @param config  the MicroProfile Config instance to obtain converters from
 	 * @param forType the type to validate values against
 	 */
-	FullConverterValidator(Object config, Type forType) {
+	FullConverterValidator(Object config, Class<?> forType) {
 		super(config, forType);
 	}
 
 	@Override
 	protected void convert(String value) throws Exception {
 		Object config = getConfig();
-		Type forType = getForType();
+		Class<?> forType = getForType();
 		Object converterInstance;
 		if (hasOptional) {
 			Object optional = getConverterMethod.invoke(config, forType);

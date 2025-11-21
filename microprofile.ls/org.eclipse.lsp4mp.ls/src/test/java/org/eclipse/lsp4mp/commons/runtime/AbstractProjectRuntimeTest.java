@@ -12,8 +12,6 @@ package org.eclipse.lsp4mp.commons.runtime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
-import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterRuntimeSupportApi;
 import org.junit.Assert;
 
@@ -38,5 +36,9 @@ public abstract class AbstractProjectRuntimeTest {
 			actualMessages.add(errorMessage);
 		});
 		Assert.assertArrayEquals("", expectedMessages, actualMessages.toArray());
+	}
+	
+	public ExecutionMode getExecutionMode() {
+		return executionMode;
 	}
 }

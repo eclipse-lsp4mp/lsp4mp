@@ -1,7 +1,5 @@
 package org.eclipse.lsp4mp.commons.runtime;
 
-import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
-import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.junit.Test;
 
 /**
@@ -49,5 +47,39 @@ public abstract class AbstractMicroProfileProjectRuntimeTest extends AbstractPro
 		assertValiateWithConverter("1,2X,3x,4", "java.lang.Integer[]", //
 				"SRCFG00029: Expected an integer value, got \"2X\"", //
 				"SRCFG00029: Expected an integer value, got \"3x\"");
+	}
+
+	@Test
+	public void testClassObject() {
+		assertValiateWithConverter("java.lang.String", "java.lang.Class<java.lang.Object>");
+	}
+
+	protected void testEnumFromJAR(boolean supportsError) {
+		// Enum value valid
+		assertValiateWithConverter("FOO", "org.acme.MyEnum");
+		if (supportsError) {
+			// Enum can be validated in full mode
+			assertValiateWithConverter("BLACK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
+					"SRCFG00049: Cannot convert BLACK to enum class org.jboss.logmanager.handlers.AsyncHandler$OverflowAction, allowed values: discard,block");
+		} else {
+			// Custom enum cannot be validated in safe mode, because it doesn't know the
+			// project classpath
+			assertValiateWithConverter("BLACK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
+		}
+	}
+
+	@Test
+	public void testEnumFromClasses() {
+		// Enum value valid
+		assertValiateWithConverter("FOO", "org.acme.MyEnum");
+		if (getExecutionMode() == ExecutionMode.FULL) {
+			// Custom enum can be validated in full mode
+			assertValiateWithConverter("FOOX", "org.acme.MyEnum",
+					"SRCFG00049: Cannot convert FOOX to enum class org.acme.MyEnum, allowed values: bar,foo");
+		} else {
+			// Custom enum cannot be validated in safe mode, because it doesn't know the
+			// project classpath
+			assertValiateWithConverter("FOOX", "org.acme.MyEnum");
+		}
 	}
 }

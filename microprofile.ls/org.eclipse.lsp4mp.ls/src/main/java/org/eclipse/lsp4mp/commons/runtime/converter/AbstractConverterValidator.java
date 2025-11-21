@@ -14,7 +14,6 @@
 package org.eclipse.lsp4mp.commons.runtime.converter;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,7 +37,7 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 	private static final Logger LOGGER = Logger.getLogger(AbstractConverterValidator.class.getName());
 
 	private final T config;
-	private final Type forType;
+	private final Class<?> forType;
 	private boolean prepared;
 
 	/**
@@ -48,7 +47,7 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 	 * @param config  the MicroProfile Config instance to obtain converters from
 	 * @param forType the type to validate values against
 	 */
-	public AbstractConverterValidator(T config, Type forType) {
+	public AbstractConverterValidator(T config, Class<?> forType) {
 		this.config = config;
 		this.forType = forType;
 		this.prepared = prepare();
@@ -124,7 +123,7 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 		return config;
 	}
 
-	public Type getForType() {
+	public Class<?> getForType() {
 		return forType;
 	}
 

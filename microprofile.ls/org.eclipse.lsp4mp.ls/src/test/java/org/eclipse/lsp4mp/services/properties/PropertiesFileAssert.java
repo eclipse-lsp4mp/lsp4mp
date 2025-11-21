@@ -14,6 +14,9 @@ import static org.junit.Assert.assertNull;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +30,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -65,6 +71,7 @@ import org.eclipse.lsp4mp.commons.MicroProfilePropertyDocumentationParams;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionData;
 import org.eclipse.lsp4mp.commons.codeaction.MicroProfileCodeActionId;
 import org.eclipse.lsp4mp.commons.metadata.ItemMetadata;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.extensions.ExtendedMicroProfileProjectInfo;
 import org.eclipse.lsp4mp.ls.MockMicroProfilePropertyDefinitionProvider;
@@ -102,8 +109,6 @@ import com.google.gson.GsonBuilder;
  */
 public class PropertiesFileAssert {
 
-	public static final int SYS_ENV_PROPERTIES_NUMBER = System.getProperties().size() + System.getenv().size();
-
 	private static MicroProfileProjectInfo DEFAULT_PROJECT;
 
 	private static MicroProfilePropertyDefinitionProvider DEFAULT_DEFINITION_PROVIDER;
@@ -129,14 +134,24 @@ public class PropertiesFileAssert {
 					path("quarkus/microprofile-config-api-3.1.jar"), //
 					path("quarkus/smallrye-config-3.14.1.jar"), //
 					path("quarkus/smallrye-config-common-3.14.1.jar"), //
-					path("quarkus/smallrye-config-core-3.14.1.jar")));
+					path("quarkus/smallrye-config-core-3.14.1.jar"), //
+					path("classes")));
 
 	// Liberty project doesn't host MicroProfile Config implementation in classpath
 	public static final MicroProfileProjectRuntime LIBERTY_PROJECT_RUNTIME = new MicroProfileProjectRuntime(
-			Collections.emptySet());
+			Set.of(path("classes")));
+
+	static {
+		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		int result = compiler.run(null, null, null, path("/classes/org/acme/MyEnum.java"));
+	}
 
 	private static String path(String path) {
-		return Paths.get("src/test/resources/classpath", path).toFile().getAbsolutePath();
+		Path p = Paths.get("src/test/resources/classpath", path);
+		if (!Files.exists(p)) {
+			throw new InvalidPathException(path, path);
+		}
+		return p.toFile().getAbsolutePath();
 	}
 
 	public static ExtendedMicroProfileProjectInfo wrapWithQuarkusProject(MicroProfileProjectInfo info) {
@@ -693,9 +708,9 @@ public class PropertiesFileAssert {
 	public static void testDiagnosticsFor(String value, String fileURI, Integer expectedCount,
 			MicroProfileProjectInfo projectInfo, MicroProfileValidationSettings validationSettings,
 			Diagnostic... expected) {
-
-		testDiagnosticsFor(value, fileURI, expectedCount, projectInfo, new MicroProfileExecutionSettings(),
-				validationSettings, expected);
+		MicroProfileExecutionSettings executionSettings = new MicroProfileExecutionSettings();
+		executionSettings.setMode(ExecutionMode.FULL.name());
+		testDiagnosticsFor(value, fileURI, expectedCount, projectInfo, executionSettings, validationSettings, expected);
 	}
 
 	public static void testDiagnosticsFor(String value, String fileURI, Integer expectedCount,
