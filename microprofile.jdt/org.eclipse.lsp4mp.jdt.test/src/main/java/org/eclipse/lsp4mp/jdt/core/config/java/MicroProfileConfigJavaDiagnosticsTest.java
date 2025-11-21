@@ -64,12 +64,12 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		// Error message like "For input string: \"foo\"" commes from SmallRyeConfig
-		Diagnostic d1 = d(10, 56, 59, "For input string: \"foo\"", DiagnosticSeverity.Error,
+		// Error message like "SRCFG00029: Expected an integer value, got \"foo\"" commes from SmallRyeConfig
+		Diagnostic d1 = d(10, 56, 59, "SRCFG00029: Expected an integer value, got \"foo\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d2 = d(13, 56, 59, "For input string: \"bar\"", DiagnosticSeverity.Error,
+		Diagnostic d2 = d(13, 56, 59, "SRCFG00029: Expected an integer value, got \"bar\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
@@ -82,7 +82,7 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 				MicroProfileConfigErrorCode.NO_VALUE_ASSIGNED_TO_PROPERTY);
 		setDataForUnassigned("greeting9", d4);
 
-		Diagnostic d5 = d(37, 57, 59, "AB can not be converted to a Character", DiagnosticSeverity.Error,
+		Diagnostic d5 = d(37, 57, 59, "SRCFG00002: AB can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
@@ -97,7 +97,7 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d8 = d(64, 65, 70, "java.time.format.DateTimeParseException: Text cannot be parsed to a Duration",
+		Diagnostic d8 = d(64, 65, 70, "Text cannot be parsed to a Duration",
 				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
@@ -116,23 +116,23 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		Diagnostic d1 = d(13, 57, 60, "For input string: \"13X\"", DiagnosticSeverity.Error,
+		Diagnostic d1 = d(13, 57, 60, "SRCFG00029: Expected an integer value, got \"13X\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d2 = d(19, 57, 60, "For input string: \"13X\"", DiagnosticSeverity.Error,
+		Diagnostic d2 = d(19, 57, 60, "SRCFG00029: Expected an integer value, got \"13X\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d3 = d(22, 57, 60, "For input string: \"13\\\"", DiagnosticSeverity.Error,
+		Diagnostic d3 = d(22, 57, 60, "SRCFG00029: Expected an integer value, got \"13\\\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d4 = d(34, 54, 56, "AB can not be converted to a Character", DiagnosticSeverity.Error,
+		Diagnostic d4 = d(34, 54, 56, "SRCFG00002: AB can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d5 = d(34, 57, 59, "CD can not be converted to a Character", DiagnosticSeverity.Error,
+		Diagnostic d5 = d(34, 57, 59, "SRCFG00002: CD can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
@@ -158,12 +158,12 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		// Error message like "For input string: \"foo\"" commes from SmallRyeConfig
-		Diagnostic d1 = d(10, 56, 59, "For input string: \"foo\"", DiagnosticSeverity.Error,
+		// Error message like "SRCFG00029: Expected an integer value, got \"foo\"" commes from SmallRyeConfig
+		Diagnostic d1 = d(10, 56, 59, "SRCFG00029: Expected an integer value, got \"foo\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d2 = d(13, 56, 59, "For input string: \"bar\"", DiagnosticSeverity.Error,
+		Diagnostic d2 = d(13, 56, 59, "SRCFG00029: Expected an integer value, got \"bar\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
@@ -180,7 +180,7 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		 * setDataForUnassigned("greeting9", d4);
 		 */
 
-		Diagnostic d5 = d(37, 57, 59, "AB can not be converted to a Character", DiagnosticSeverity.Error,
+		Diagnostic d5 = d(37, 57, 59, "SRCFG00002: AB can not be converted to a Character", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
@@ -195,7 +195,7 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d8 = d(64, 65, 70, "java.time.format.DateTimeParseException: Text cannot be parsed to a Duration",
+		Diagnostic d8 = d(64, 65, 70, "Text cannot be parsed to a Duration",
 				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 

@@ -14,7 +14,6 @@
 package org.eclipse.lsp4mp.commons.runtime.converter.full;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -72,7 +71,7 @@ public class FullConverterRuntimeSupport extends AbstractConverterRuntimeSupport
 	}
 
 	@Override
-	protected ConverterValidator newConverter(Object config, Type type) {
+	protected ConverterValidator newConverter(Object config, Class<?> type) {
 		return new FullConverterValidator(config, type);
 	}
 

@@ -24,7 +24,7 @@ public class SafeConverterRuntimeSupport extends AbstractConverterRuntimeSupport
 	}
 
 	@Override
-	protected ConverterValidator newConverter(Config config, Type type) {
+	protected ConverterValidator newConverter(Config config, Class<?> type) {
 		return new SafeConverterValidator(config, type);
 	}
 

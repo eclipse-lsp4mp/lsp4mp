@@ -55,7 +55,8 @@ public class MicroProfileProjectRuntime {
 	private final ClassLoader parentClassLoader;
 
 	/** Cache of loaded classes (String → Class) to avoid reloading */
-	private final Map<String, Type> classTypes;
+	private final Map<String, Type> safeClassTypes;
+	private final Map<String, Type> fullClassTypes;
 
 	/** Dedicated ClassLoader for the project runtime, created from the classpath */
 	private ProjectClassLoader runtimeClassLoader;
@@ -71,7 +72,8 @@ public class MicroProfileProjectRuntime {
 		// Initialize maps
 		safeRuntimesSupport = new HashMap<>();
 		fullRuntimesSupport = new HashMap<>();
-		classTypes = new HashMap<>();
+		safeClassTypes = new HashMap<>();
+		fullClassTypes = new HashMap<>();
 
 		parentClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -140,7 +142,8 @@ public class MicroProfileProjectRuntime {
 	}
 
 	/**
-	 * Returns the dedicated ClassLoader for this project's runtime.
+	 * Returns the dedicated ClassLoader for this project's runtime. Thsi
+	 * classloader is only used in full mode.
 	 */
 	public ClassLoader getRuntimeClassLoader() {
 		return runtimeClassLoader;
@@ -163,14 +166,16 @@ public class MicroProfileProjectRuntime {
 	 * Retrieves the Class corresponding to the given fully qualified name. Uses an
 	 * internal cache to avoid reloading the same class multiple times.
 	 *
-	 * @param type fully qualified class name (FQCN)
+	 * @param type          fully qualified class name (FQCN)
+	 * @param executionMode
 	 * @return the corresponding Class, or null if not found
 	 */
-	public Type findClassType(String type) {
+	public Type findClassType(String type, ExecutionMode executionMode) {
+		Map<String, Type> classTypes = executionMode == ExecutionMode.FULL ? fullClassTypes : safeClassTypes;
 		Type cl = classTypes.get(type);
 		if (cl == null) {
 			try {
-				cl = forNameSmart(type);
+				cl = forNameSmart(type, executionMode);
 				// Load the class via the project's dedicated ClassLoader
 				classTypes.put(type, cl);
 			} catch (Exception e) {
@@ -180,7 +185,7 @@ public class MicroProfileProjectRuntime {
 		return cl;
 	}
 
-	private Type forNameSmart(String typeName) throws ClassNotFoundException {
+	private Type forNameSmart(String typeName, ExecutionMode executionMode) throws ClassNotFoundException {
 
 		// Primitives
 		switch (typeName) {
@@ -204,14 +209,15 @@ public class MicroProfileProjectRuntime {
 			return void.class;
 		}
 
+		ClassLoader classLoader = executionMode == ExecutionMode.FULL ? getRuntimeClassLoader() : parentClassLoader;
 		if (typeName.endsWith("[]")) {
 			String element = typeName.substring(0, typeName.length() - 2);
-			Class<?> elementClass = (Class<?>) forNameSmart(element);
+			Class<?> elementClass = (Class<?>) forNameSmart(element, executionMode);
 			return java.lang.reflect.Array.newInstance(elementClass, 0).getClass();
 		} else if (typeName.indexOf('<') == -1) {
-			return Class.forName(typeName, false, getRuntimeClassLoader());
+			return Class.forName(typeName, false, classLoader);
 		} else {
-			return TypeSignatureParser.parse(typeName, getRuntimeClassLoader());
+			return TypeSignatureParser.parse(typeName, classLoader);
 		}
 	}
 

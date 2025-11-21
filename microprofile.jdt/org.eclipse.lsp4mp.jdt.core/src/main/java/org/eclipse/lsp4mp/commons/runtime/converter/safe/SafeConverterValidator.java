@@ -13,7 +13,6 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter.safe;
 
-import java.lang.reflect.Type;
 import java.util.Optional;
 
 import org.eclipse.lsp4mp.commons.runtime.converter.AbstractConverterValidator;
@@ -48,7 +47,7 @@ class SafeConverterValidator extends AbstractConverterValidator<Config> {
 	 * @param config  the MicroProfile Config instance to obtain converters from
 	 * @param forType the type to validate values against
 	 */
-	SafeConverterValidator(Config config, Type forType) {
+	SafeConverterValidator(Config config, Class<?> forType) {
 		super(config, forType);
 	}
 
@@ -69,9 +68,8 @@ class SafeConverterValidator extends AbstractConverterValidator<Config> {
 	@Override
 	protected boolean initialize() throws Exception {
 		Config config = getConfig();
-		Type forType = getForType();
-
-		Optional<Converter<?>> result = config.getConverter((Class) forType);
+		Class forType = getForType();
+		Optional<Converter<?>> result = config.getConverter(forType);
 		if (result.isEmpty()) {
 			return false;
 		}

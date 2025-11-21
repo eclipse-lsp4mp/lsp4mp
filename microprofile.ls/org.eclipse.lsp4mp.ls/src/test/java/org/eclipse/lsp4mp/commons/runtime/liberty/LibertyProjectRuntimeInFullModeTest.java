@@ -4,6 +4,7 @@ import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.LIBERT
 
 import org.eclipse.lsp4mp.commons.runtime.AbstractMicroProfileProjectRuntimeTest;
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
+import org.junit.Test;
 
 /**
  * Liberty project doesn't host MicroProfile Config implementation in their
@@ -15,6 +16,11 @@ public class LibertyProjectRuntimeInFullModeTest extends AbstractMicroProfilePro
 
 	public LibertyProjectRuntimeInFullModeTest() {
 		super(LIBERTY_PROJECT_RUNTIME, ExecutionMode.FULL);
+	}
+	
+	@Test
+	public void testEnumFromJAR() {
+		super.testEnumFromJAR(false);
 	}
 
 }

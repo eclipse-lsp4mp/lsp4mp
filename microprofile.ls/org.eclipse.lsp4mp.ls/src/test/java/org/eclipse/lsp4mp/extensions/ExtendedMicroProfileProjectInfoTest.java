@@ -105,15 +105,20 @@ public class ExtendedMicroProfileProjectInfoTest {
 
 		// Update with empty hints
 		wrapper.updateSourcesProperties(new ArrayList<>(), new ArrayList<>());
-		Assert.assertEquals(0 + PropertiesFileAssert.SYS_ENV_PROPERTIES_NUMBER, wrapper.getProperties().size());
-
+		int sysEnvPropertiesNumber = System.getProperties().size() + System.getenv().size();
+		Assert.assertEquals(0 + sysEnvPropertiesNumber, wrapper.getProperties().size());
+		wrapper.updateSourcesProperties(new ArrayList<>(), new ArrayList<>());
+		sysEnvPropertiesNumber = System.getProperties().size() + System.getenv().size();
+		Assert.assertEquals(0 + sysEnvPropertiesNumber, wrapper.getProperties().size());
+		
 		// Update with 3 hints
 		value = new ValueHint();
 		value.setValue("C");
 		hint.getValues().add(value);
 
 		wrapper.updateSourcesProperties(new ArrayList<>(), Arrays.asList(hint));
-		Assert.assertEquals(3 + PropertiesFileAssert.SYS_ENV_PROPERTIES_NUMBER, wrapper.getProperties().size());
+		sysEnvPropertiesNumber = System.getProperties().size() + System.getenv().size();
+		Assert.assertEquals(3 + sysEnvPropertiesNumber, wrapper.getProperties().size());
 		assertPropertyExist("quarkus.cache.caffeine.A.initial-capacity", wrapper);
 		assertPropertyExist("quarkus.cache.caffeine.B.initial-capacity", wrapper);
 		assertPropertyExist("quarkus.cache.caffeine.C.initial-capacity", wrapper);
