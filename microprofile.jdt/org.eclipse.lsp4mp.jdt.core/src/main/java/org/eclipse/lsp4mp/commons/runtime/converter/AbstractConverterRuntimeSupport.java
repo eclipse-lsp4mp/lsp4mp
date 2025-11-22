@@ -1,16 +1,16 @@
 /*******************************************************************************
-* Copyright (c) 2025 Red Hat Inc. and others.
-*
-* This program and the accompanying materials are made available under the
-* terms of the Eclipse Public License v. 2.0 which is available at
-* http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-* which is available at https://www.apache.org/licenses/LICENSE-2.0.
-*
-* SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-*
-* Contributors:
-*     Red Hat Inc. - initial API and implementation
-*******************************************************************************/
+ * Copyright (c) 2025 Red Hat Inc. and others.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *     Red Hat Inc. - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter;
 
 import java.lang.reflect.Array;
@@ -32,27 +32,38 @@ import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileRuntimeSupport;
 
 /**
- * ConverterRuntimeSupport allows dynamic validation of string values against
- * Java types using MicroProfile Config converters from the project classpath.
+ * Base class providing runtime support for validating and converting string
+ * values against Java types using MicroProfile Config converters.
  *
  * <p>
- * This class uses reflection to avoid classloader issues and caches converters
- * per type for performance. Only converters discovered via
- * Config.getConverter(Class) are used.
+ * This class caches converters per type to improve performance and handles
+ * collections, maps, optionals, suppliers, and arrays.
  * </p>
- * 
- * @author Angelo ZERR
+ *
+ * <p>
+ * Behavior differs depending on the execution mode:
+ * </p>
+ * <ul>
+ * <li><strong>SAFE</strong> – No access to the project classpath or classes.
+ * Only the embedded SmallRye Config runtime is used. No reflection on project
+ * classes is performed. This ensures sandboxed validation.</li>
+ * <li><strong>FULL</strong> – Uses the project classpath. Project classes and
+ * custom converters may be loaded via reflection.</li>
+ * </ul>
+ *
+ * @param <T> the configuration source type (e.g., MicroProfile Config instance)
+ * @author Angelo
  */
 public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroProfileRuntimeSupport
 		implements ConverterRuntimeSupportApi {
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractConverterRuntimeSupport.class.getName());
 
+	/** Null converter that does nothing */
 	private static final ConverterValidator NULL_CONVERTER = new ConverterValidator() {
-
 		@Override
 		public void validate(String value, int start, DiagnosticsCollector collector) {
-			// Do nothing
+			// No-op
 		}
 
 		@Override
@@ -61,16 +72,36 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 		}
 	};
 
+	/** Configuration instance used for conversions */
 	private T config;
+
+	/** Initialization flag */
 	private boolean initialized;
 
-	/** Cache of ConverterInvoker per type */
+	/** Cache of ConverterValidator per type */
 	private final Map<String, ConverterValidator> converterCache = new ConcurrentHashMap<>();
 
+	/**
+	 * Constructs a new runtime support instance.
+	 *
+	 * @param project       the owning MicroProfile project runtime
+	 * @param executionMode the execution mode (SAFE or FULL)
+	 */
 	public AbstractConverterRuntimeSupport(MicroProfileProjectRuntime project, ExecutionMode executionMode) {
 		super(project, executionMode);
 	}
 
+	/**
+	 * Validates a string value against the specified type.
+	 *
+	 * <p>
+	 * Delegates to a cached {@link ConverterValidator} for the given type.
+	 * </p>
+	 *
+	 * @param value     the string value to validate
+	 * @param type      the fully-qualified type name
+	 * @param collector diagnostics collector to report validation errors
+	 */
 	@Override
 	public void validate(String value, String type, DiagnosticsCollector collector) {
 		try {
@@ -78,17 +109,21 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 			if (cfg == null) {
 				return;
 			}
-			// Get or prepare the converter invoker
 			ConverterValidator validator = converterCache.computeIfAbsent(type,
 					t -> resolveConverter(getProject().findClassType(t, getExecutionMode()), cfg));
 			if (validator.canValidate()) {
 				validator.validate(value, collector);
 			}
 		} catch (Throwable e) {
-			LOGGER.log(Level.WARNING, "Error while validating '" + value + "' value with type '" + type + "", e);
+			LOGGER.log(Level.WARNING, "Error while validating '" + value + "' value with type '" + type + "'", e);
 		}
 	}
 
+	/**
+	 * Returns the configuration instance, initializing it lazily if necessary.
+	 *
+	 * @return the configuration instance, or null if unavailable
+	 */
 	protected T getConfig() {
 		if (config != null || initialized) {
 			return config;
@@ -104,11 +139,16 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	}
 
 	/**
-	 * Returns true if classpath hosts an implementation of MicroProfile
-	 * ConfigProviderResolver and false otherwise.
-	 * 
-	 * @return true if classpath hosts an implementation of MicroProfile
-	 *         ConfigProviderResolver and false otherwise.
+	 * Returns {@code true} if a MicroProfile ConfigProviderResolver is present in
+	 * the current classpath.
+	 *
+	 * <p>
+	 * SAFE mode always returns {@code false} since the project classpath is never
+	 * consulted.
+	 * </p>
+	 *
+	 * @return true if a ConfigProviderResolver implementation is present, false
+	 *         otherwise
 	 */
 	public boolean hasConfigProviderResolver() {
 		getConfig();
@@ -116,7 +156,7 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	}
 
 	/**
-	 * Reset cached config and converters.
+	 * Resets the cached configuration and converters.
 	 */
 	@Override
 	public void reset() {
@@ -126,18 +166,16 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	}
 
 	/**
-	 * Resolves a converter for the specified type using the provided Config
-	 * instance.
-	 * 
+	 * Resolves a {@link ConverterValidator} for the specified Java type.
+	 *
 	 * <p>
 	 * Handles collections, maps, optionals, suppliers, and arrays by returning
-	 * appropriate {@link ConverterValidator} instances.
+	 * appropriate validators.
 	 * </p>
-	 * 
-	 * @param type   the Java type to resolve a converter for
-	 * @param config the MicroProfile Config instance
-	 * @return a {@link ConverterValidator} capable of validating values of the
-	 *         given type
+	 *
+	 * @param type   the Java type to resolve
+	 * @param config the configuration instance
+	 * @return a ConverterValidator for the given type, or a no-op validator if none
 	 */
 	protected ConverterValidator resolveConverter(Type type, T config) {
 		if (type == null) {
@@ -146,22 +184,15 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 		Class rawType = rawTypeOf(type);
 		if (type instanceof ParameterizedType) {
 			Type[] typeArgs = ((ParameterizedType) type).getActualTypeArguments();
-			if (rawType == List.class) {
+			if (rawType == List.class || rawType == Set.class) {
 				return newCollectionConverter(resolveConverter(typeArgs[0], config));
 			}
-
-			if (rawType == Set.class) {
-				return newCollectionConverter(resolveConverter(typeArgs[0], config));
-			}
-
 			if (rawType == Map.class) {
 				return newMapConverter(resolveConverter(typeArgs[0], config), resolveConverter(typeArgs[1], config));
 			}
-
 			if (rawType == Optional.class) {
 				return newOptionalConverter(resolveConverter(typeArgs[0], config));
 			}
-
 			if (rawType == Supplier.class || "jakarta.inject.Provider".equals(rawType.getName())) {
 				return resolveConverter(typeArgs[0], config);
 			}
@@ -188,11 +219,10 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 
 	/**
 	 * Returns the raw {@link Class} corresponding to a given {@link Type}.
-	 * 
-	 * @param <T>  the type of the raw class
-	 * @param type the Java type
-	 * @return the raw {@link Class} of the type, or {@code null} if it cannot be
-	 *         determined
+	 *
+	 * @param <T>  the type of the class
+	 * @param type the type to resolve
+	 * @return the raw class, or null if it cannot be determined
 	 */
 	static <T> Class<T> rawTypeOf(Type type) {
 		if (type instanceof Class) {
@@ -213,56 +243,55 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	 */
 	static class CollectionConverter implements ConverterValidator {
 
-		private ConverterValidator delegate;
+		private final ConverterValidator delegate;
 
 		/**
 		 * Creates a new collection converter delegating to the given element converter.
-		 * 
+		 *
 		 * @param delegate the element converter
 		 */
 		CollectionConverter(ConverterValidator delegate) {
 			this.delegate = delegate;
 		}
 
-		/**
-		 * Returns {@code true} if the underlying element converter can validate values.
-		 */
 		@Override
 		public boolean canValidate() {
 			return delegate.canValidate();
 		}
 
-		/**
-		 * Validates a comma-separated list of values by delegating each element to the
-		 * underlying converter.
-		 * 
-		 * @param value     the string containing one or more comma-separated elements
-		 * @param start     the start offset for diagnostics
-		 * @param collector the collector to report validation errors
-		 */
 		@Override
 		public void validate(String value, int start, DiagnosticsCollector collector) {
-			int end = 0;
-
+			int startOffset = start;
 			StringBuilder currentValue = new StringBuilder();
 			for (int i = 0; i < value.length(); i++) {
 				char c = value.charAt(i);
 				if (c == ',') {
-					delegate.validate(currentValue.toString(), start, collector);
+					delegate.validate(currentValue.toString(), startOffset, collector);
 					currentValue.setLength(0);
-					start = i + 1;
+					startOffset = i + 1;
 				} else {
 					currentValue.append(c);
 				}
 			}
 			if (!currentValue.isEmpty()) {
-				delegate.validate(currentValue.toString(), start, collector);
+				delegate.validate(currentValue.toString(), startOffset, collector);
 			}
 		}
 	}
 
+	/**
+	 * Creates a new converter for the given type using the provided configuration.
+	 *
+	 * @param config the configuration instance
+	 * @param type   the Java type to convert
+	 * @return a ConverterValidator for the type
+	 */
 	protected abstract ConverterValidator newConverter(T config, Class<?> type);
 
+	/**
+	 * Loads the configuration instance used for conversions.
+	 *
+	 * @return the configuration instance
+	 */
 	protected abstract T loadConfig();
-
 }

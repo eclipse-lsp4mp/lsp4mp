@@ -1,49 +1,55 @@
 /*******************************************************************************
-* Copyright (c) 2025 Red Hat Inc. and others.
-*
-* This program and the accompanying materials are made available under the
-* terms of the Eclipse Public License v. 2.0 which is available at
-* http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-* which is available at https://www.apache.org/licenses/LICENSE-2.0.
-*
-* SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-*
-* Contributors:
-*     Red Hat Inc. - initial API and implementation
-*******************************************************************************/
+ * Copyright (c) 2025 Red Hat Inc. and others.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *     Red Hat Inc. - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter.safe;
 
 import java.util.Optional;
 
 import org.eclipse.lsp4mp.commons.runtime.converter.AbstractConverterValidator;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterValidator;
-import org.eclipse.lsp4mp.commons.runtime.converter.DiagnosticsCollector;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.spi.Converter;
 
 /**
- * Implementation of {@link ConverterValidator} that uses reflection to access a
- * MicroProfile Config {@code Converter} for a specific type.
- * 
+ * SAFE mode implementation of {@link ConverterValidator} for a single type.
+ *
  * <p>
- * This class dynamically obtains the converter via reflection from the provided
- * Config instance, and executes it to validate string values. Conversion errors
- * are reported through a {@link DiagnosticsCollector}.
+ * In SAFE mode:
+ * </p>
+ * <ul>
+ * <li>The project classpath and project classes are <strong>not</strong>
+ * accessed.</li>
+ * <li>Only the embedded SmallRye Config runtime is used.</li>
+ * <li>No reflection on user classes is performed.</li>
+ * <li>Validation uses converters provided by SmallRye Config.</li>
+ * </ul>
+ *
+ * <p>
+ * This validator delegates the actual conversion to the {@link Converter}
+ * obtained from the SmallRye {@link Config} instance.
  * </p>
  * 
- * <p>
- * It supports converters returned either as
- * {@code java.util.Optional<Converter<T>>} or directly as {@code Converter<T>}.
- * </p>
+ * @author Angelo
  */
 class SafeConverterValidator extends AbstractConverterValidator<Config> {
 
+	/** The converter used to convert string values to the target type */
 	private Converter<?> converter;
 
 	/**
-	 * Creates a new validator for the given type using the provided {@code Config}
-	 * instance.
-	 * 
+	 * Creates a new SAFE validator for the given type using the provided
+	 * {@code Config}.
+	 *
 	 * @param config  the MicroProfile Config instance to obtain converters from
 	 * @param forType the type to validate values against
 	 */
@@ -51,6 +57,16 @@ class SafeConverterValidator extends AbstractConverterValidator<Config> {
 		super(config, forType);
 	}
 
+	/**
+	 * Converts the given string value using the configured SmallRye converter.
+	 *
+	 * <p>
+	 * Does nothing if no converter is available.
+	 * </p>
+	 *
+	 * @param value the string value to convert
+	 * @throws Exception if conversion fails
+	 */
 	@Override
 	protected void convert(String value) throws Exception {
 		if (converter == null) {
@@ -60,10 +76,16 @@ class SafeConverterValidator extends AbstractConverterValidator<Config> {
 	}
 
 	/**
-	 * Prepares the validator by obtaining the converter for the target type via
-	 * reflection.
+	 * Initializes the validator by obtaining a converter for the target type from
+	 * the SmallRye Config instance.
+	 *
+	 * <p>
+	 * In SAFE mode, only converters from the embedded runtime are used; project
+	 * classes are never accessed.
+	 * </p>
 	 *
 	 * @return {@code true} if a converter is available, {@code false} otherwise
+	 * @throws Exception if initialization fails
 	 */
 	@Override
 	protected boolean initialize() throws Exception {
