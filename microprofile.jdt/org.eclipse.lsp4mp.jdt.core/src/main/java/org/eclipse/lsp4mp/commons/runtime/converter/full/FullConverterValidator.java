@@ -1,16 +1,16 @@
 /*******************************************************************************
-* Copyright (c) 2025 Red Hat Inc. and others.
-*
-* This program and the accompanying materials are made available under the
-* terms of the Eclipse Public License v. 2.0 which is available at
-* http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-* which is available at https://www.apache.org/licenses/LICENSE-2.0.
-*
-* SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-*
-* Contributors:
-*     Red Hat Inc. - initial API and implementation
-*******************************************************************************/
+ * Copyright (c) 2025 Red Hat Inc. and others.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *     Red Hat Inc. - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter.full;
 
 import java.lang.reflect.Method;
@@ -18,33 +18,46 @@ import java.lang.reflect.Type;
 
 import org.eclipse.lsp4mp.commons.runtime.converter.AbstractConverterValidator;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterValidator;
-import org.eclipse.lsp4mp.commons.runtime.converter.DiagnosticsCollector;
 
 /**
- * Implementation of {@link ConverterValidator} that uses reflection to access a
- * MicroProfile Config {@code Converter} for a specific type.
- * 
+ * FULL mode implementation of {@link ConverterValidator} for a single type.
+ *
  * <p>
- * This class dynamically obtains the converter via reflection from the provided
- * Config instance, and executes it to validate string values. Conversion errors
- * are reported through a {@link DiagnosticsCollector}.
+ * In FULL mode:
+ * </p>
+ * <ul>
+ * <li>The project classpath and project classes <strong>are</strong>
+ * accessible.</li>
+ * <li>Converters may be obtained from the project using reflection.</li>
+ * <li>Both standard and user-defined MicroProfile Config converters are
+ * used.</li>
+ * <li>Reflection handles both {@code Optional<Converter<T>>} and direct
+ * {@code Converter<T>} returns.</li>
+ * </ul>
+ *
+ * <p>
+ * This validator uses reflection to obtain and invoke the {@code convert}
+ * method on the target converter dynamically, ensuring that project classes are
+ * correctly handled.
  * </p>
  * 
- * <p>
- * It supports converters returned either as
- * {@code java.util.Optional<Converter<T>>} or directly as {@code Converter<T>}.
- * </p>
+ * @author Angelo
  */
 class FullConverterValidator extends AbstractConverterValidator<Object> {
 
+	/** Method to obtain the converter from the Config instance */
 	private Method getConverterMethod;
+
+	/** Method to convert a string value using the converter */
 	private Method convertMethod;
+
+	/** Indicates whether getConverter returns an Optional */
 	private boolean hasOptional;
 
 	/**
-	 * Creates a new validator for the given type using the provided {@code Config}
-	 * instance.
-	 * 
+	 * Creates a new FULL validator for the given type using the provided
+	 * {@code Config}.
+	 *
 	 * @param config  the MicroProfile Config instance to obtain converters from
 	 * @param forType the type to validate values against
 	 */
@@ -52,11 +65,19 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 		super(config, forType);
 	}
 
+	/**
+	 * Converts the given string value using the project converter obtained via
+	 * reflection.
+	 *
+	 * @param value the string value to convert
+	 * @throws Exception if conversion fails
+	 */
 	@Override
 	protected void convert(String value) throws Exception {
 		Object config = getConfig();
 		Class<?> forType = getForType();
 		Object converterInstance;
+
 		if (hasOptional) {
 			Object optional = getConverterMethod.invoke(config, forType);
 			Method get = optional.getClass().getMethod("get");
@@ -69,35 +90,39 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 	}
 
 	/**
-	 * Prepares the validator by obtaining the converter for the target type via
+	 * Initializes the validator by obtaining the converter for the target type via
 	 * reflection.
 	 *
+	 * <p>
+	 * Handles both {@code Optional<Converter<T>>} and direct {@code Converter<T>}
+	 * returned by {@code Config#getConverter(Class<T>)}.
+	 * </p>
+	 *
 	 * @return {@code true} if a converter is available, {@code false} otherwise
+	 * @throws Exception if initialization fails
 	 */
 	@Override
 	protected boolean initialize() throws Exception {
 		Object config = getConfig();
 		Type forType = getForType();
 
-		// get <T> Optional<Converter<T>> Config#getConverter(Class<T> forType) method.
+		// Obtain the method getConverter(Class<T> forType)
 		Method getConverter = config.getClass().getMethod("getConverter", Class.class);
 		getConverter.setAccessible(true);
 		Object optional = getConverter.invoke(config, forType);
 
 		Object converterInstance;
 		hasOptional = true;
+
 		try {
-			// get Optional<Converter<T>>.isPresent()
 			Method isPresent = optional.getClass().getMethod("isPresent");
 			if (!(boolean) isPresent.invoke(optional)) {
 				return false;
 			}
-			// get Optional<Converter<T>>.get()
 			Method get = optional.getClass().getMethod("get");
 			converterInstance = get.invoke(optional);
 		} catch (Exception e) {
-			// for some reason, getConverter(Class<T> forType) returns
-			// sometimes Converter<T> ?
+			// Fallback if getConverter returns Converter<T> directly
 			hasOptional = false;
 			converterInstance = optional;
 		}

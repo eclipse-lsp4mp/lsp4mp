@@ -1,16 +1,16 @@
 /*******************************************************************************
-* Copyright (c) 2025 Red Hat Inc. and others.
-*
-* This program and the accompanying materials are made available under the
-* terms of the Eclipse Public License v. 2.0 which is available at
-* http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-* which is available at https://www.apache.org/licenses/LICENSE-2.0.
-*
-* SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-*
-* Contributors:
-*     Red Hat Inc. - initial API and implementation
-*******************************************************************************/
+ * Copyright (c) 2025 Red Hat Inc. and others.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+ * which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *
+ * Contributors:
+ *     Red Hat Inc. - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter;
 
 import java.lang.reflect.InvocationTargetException;
@@ -18,32 +18,46 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implementation of {@link ConverterValidator} that uses reflection to access a
- * MicroProfile Config {@code Converter} for a specific type.
- * 
+ * Base class for implementing a MicroProfile Config value validator with
+ * conversion support.
+ *
  * <p>
- * This class dynamically obtains the converter via reflection from the provided
- * Config instance, and executes it to validate string values. Conversion errors
- * are reported through a {@link DiagnosticsCollector}.
+ * This validator works in two execution modes:
  * </p>
- * 
+ *
+ * <ul>
+ * <li><strong>SAFE</strong> – The project classpath and classes are never
+ * accessed. Only the embedded SmallRye Config runtime is used. No reflection on
+ * user classes is performed. This ensures stable and sandboxed validation.</li>
+ *
+ * <li><strong>FULL</strong> – Uses the project classpath. Project classes may
+ * be loaded, reflection is allowed, and custom converters from the project can
+ * be used.</li>
+ * </ul>
+ *
  * <p>
- * It supports converters returned either as
- * {@code java.util.Optional<Converter<T>>} or directly as {@code Converter<T>}.
+ * Conversion failures are reported through a {@link DiagnosticsCollector}.
  * </p>
+ *
+ * @param <T> the configuration source type (e.g., MicroProfile Config instance)
  */
 public abstract class AbstractConverterValidator<T> implements ConverterValidator {
 
 	private static final Logger LOGGER = Logger.getLogger(AbstractConverterValidator.class.getName());
 
+	/** The configuration source (e.g., MicroProfile Config) */
 	private final T config;
+
+	/** The target type for conversion */
 	private final Class<?> forType;
+
+	/** Indicates whether the validator has been prepared */
 	private boolean prepared;
 
 	/**
-	 * Creates a new validator for the given type using the provided {@code Config}
-	 * instance.
-	 * 
+	 * Creates a new validator for the given target type using the provided
+	 * configuration.
+	 *
 	 * @param config  the MicroProfile Config instance to obtain converters from
 	 * @param forType the type to validate values against
 	 */
@@ -54,17 +68,28 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 	}
 
 	/**
-	 * Validates the given string value against the target type. If conversion
-	 * fails, the error is reported through the provided collector.
-	 * 
+	 * Validates a string value against the target type.
+	 *
+	 * <p>
+	 * Behavior by execution mode:
+	 * </p>
+	 * <ul>
+	 * <li><strong>SAFE mode</strong> – Uses only the embedded SmallRye Config. No
+	 * project classes are loaded. Custom converters from the project are
+	 * ignored.</li>
+	 * <li><strong>FULL mode</strong> – Uses the project's config implementation.
+	 * Project classes and custom converters can be loaded via reflection.</li>
+	 * </ul>
+	 *
 	 * @param value     the string value to validate
-	 * @param start     the start offset for diagnostics
-	 * @param collector the collector to report conversion errors
+	 * @param start     the start offset for reporting diagnostics
+	 * @param collector the diagnostics collector to report conversion errors
 	 */
 	@Override
 	public void validate(String value, int start, DiagnosticsCollector collector) {
-		if (!prepared)
+		if (!prepared) {
 			return;
+		}
 
 		try {
 			convert(value);
@@ -77,10 +102,10 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 	}
 
 	/**
-	 * Prepares the validator by obtaining the converter for the target type via
-	 * reflection.
+	 * Prepares the validator by initializing the converter for the target type.
 	 *
-	 * @return {@code true} if a converter is available, {@code false} otherwise
+	 * @return {@code true} if the validator is ready to perform conversion,
+	 *         {@code false} otherwise
 	 */
 	private boolean prepare() {
 		try {
@@ -92,10 +117,11 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 	}
 
 	/**
-	 * Extracts the meaningful error message from a reflection/invocation exception.
+	 * Extracts a meaningful error message from a reflection or invocation
+	 * exception.
 	 *
 	 * @param e the exception thrown during conversion
-	 * @return the extracted error message or {@code null} if none
+	 * @return the extracted message, or {@code null} if none
 	 */
 	private static String getErrorMessage(Throwable e) {
 		Throwable t = e;
@@ -103,32 +129,61 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 				|| (t != null && t.getCause() instanceof InvocationTargetException)) {
 			t = t.getCause();
 		}
-		if (t != null) {
-			return t.getMessage();
-		}
-		return e.getMessage();
+		return (t != null) ? t.getMessage() : e.getMessage();
 	}
 
 	/**
-	 * Indicates whether this validator can perform validation for the target type.
-	 * 
-	 * @return {@code true} if a converter is available, {@code false} otherwise
+	 * Indicates whether this validator is prepared and can perform validation.
+	 *
+	 * @return {@code true} if the validator is ready, {@code false} otherwise
 	 */
 	@Override
 	public boolean canValidate() {
 		return prepared;
 	}
 
+	/**
+	 * Returns the configuration source used by this validator.
+	 *
+	 * @return the config instance
+	 */
 	public T getConfig() {
 		return config;
 	}
 
+	/**
+	 * Returns the target type for which values are validated.
+	 *
+	 * @return the target type class
+	 */
 	public Class<?> getForType() {
 		return forType;
 	}
 
+	/**
+	 * Initializes the validator by setting up the converter for the target type.
+	 * This method is called during construction to prepare the validator.
+	 *
+	 * <p>
+	 * In SAFE mode, only embedded converters are used. In FULL mode, project
+	 * classes and converters may be loaded via reflection.
+	 * </p>
+	 *
+	 * @return {@code true} if initialization succeeded, {@code false} otherwise
+	 * @throws Exception if initialization fails
+	 */
 	protected abstract boolean initialize() throws Exception;
 
+	/**
+	 * Converts the given string value to the target type.
+	 *
+	 * <p>
+	 * In SAFE mode, conversion uses only the embedded runtime. In FULL mode,
+	 * project classes and converters may be used.
+	 * </p>
+	 *
+	 * @param value the string value to convert
+	 * @throws Exception if conversion fails
+	 */
 	protected abstract void convert(String value) throws Exception;
-
 }
