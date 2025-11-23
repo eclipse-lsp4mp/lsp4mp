@@ -64,7 +64,8 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		// Error message like "SRCFG00029: Expected an integer value, got \"foo\"" commes from SmallRyeConfig
+		// Error message like "SRCFG00029: Expected an integer value, got \"foo\""
+		// commes from SmallRyeConfig
 		Diagnostic d1 = d(10, 56, 59, "SRCFG00029: Expected an integer value, got \"foo\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
@@ -76,6 +77,7 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		Diagnostic d3 = d(19, 56, 59, "Value out of range. Value:\"128\" Radix:10", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
 		Diagnostic d4 = d(34, 27, 38,
 				"The property 'greeting9' is not assigned a value in any config file, and must be assigned at runtime.",
 				DiagnosticSeverity.Warning, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
@@ -86,23 +88,21 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		/*
-		 * Diagnostic d6 = d(52, 83, 86,
-		 * "No enum constant org.acme.config.DefaultValueResource.ProcessingLevel.FOO",
-		 * DiagnosticSeverity.Error,
-		 * MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
-		 * MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
-		 */
+		Diagnostic d6 = d(52, 83, 86,
+				"SRCFG00049: Cannot convert FOO to enum class org.acme.config.DefaultValueResource$ProcessingLevel, allowed values: all,messages,messages-persist",
+				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
 		Diagnostic d7 = d(58, 62, 67, "Text '00-00' could not be parsed at index 2", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d8 = d(64, 65, 70, "Text cannot be parsed to a Duration",
-				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+		Diagnostic d8 = d(64, 65, 70, "Text cannot be parsed to a Duration", DiagnosticSeverity.Error,
+				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
 		assertJavaDiagnostics(diagnosticsParams, utils, //
-				d1, d2, d3, d4, d5, /* d6, */ d7, d8);
+				d1, d2, d3, d4, d5, d6, d7, d8);
 	}
 
 	@Test
@@ -158,7 +158,8 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 		diagnosticsParams.setUris(Arrays.asList(javaFile.getLocation().toFile().toURI().toString()));
 		diagnosticsParams.setDocumentFormat(DocumentFormat.Markdown);
 
-		// Error message like "SRCFG00029: Expected an integer value, got \"foo\"" commes from SmallRyeConfig
+		// Error message like "SRCFG00029: Expected an integer value, got \"foo\""
+		// commes from SmallRyeConfig
 		Diagnostic d1 = d(10, 56, 59, "SRCFG00029: Expected an integer value, got \"foo\"", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
@@ -184,23 +185,21 @@ public class MicroProfileConfigJavaDiagnosticsTest extends BasePropertiesManager
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		/*
-		 * Diagnostic d6 = d(52, 83, 86,
-		 * "No enum constant org.acme.config.DefaultValueResource.ProcessingLevel.FOO",
-		 * DiagnosticSeverity.Error,
-		 * MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
-		 * MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
-		 */
+		Diagnostic d6 = d(52, 83, 86,
+				"SRCFG00049: Cannot convert FOO to enum class org.acme.config.DefaultValueResource$ProcessingLevel, allowed values: all,messages,messages-persist",
+				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
+
 		Diagnostic d7 = d(58, 62, 67, "Text '00-00' could not be parsed at index 2", DiagnosticSeverity.Error,
 				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
-		Diagnostic d8 = d(64, 65, 70, "Text cannot be parsed to a Duration",
-				DiagnosticSeverity.Error, MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
+		Diagnostic d8 = d(64, 65, 70, "Text cannot be parsed to a Duration", DiagnosticSeverity.Error,
+				MicroProfileConfigConstants.MICRO_PROFILE_CONFIG_DIAGNOSTIC_SOURCE,
 				MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE);
 
 		assertJavaDiagnostics(diagnosticsParams, utils, //
-				d1, d2, d3, d5, /* d6, */ d7, d8);
+				d1, d2, d3, d5, d6, d7, d8);
 
 	}
 

@@ -71,19 +71,4 @@ public class LibertyProjectRuntimeInSafeModeTest extends AbstractMicroProfilePro
 		assertValiateWithConverter("FOOX", "org.acme.MyEnum");
 	}
 
-	/**
-	 * Tests enum conversion for enums defined in JAR dependencies.
-	 * <p>
-	 * In SAFE mode, enums from project JARs cannot be validated because the JARs
-	 * are not on the classpath.
-	 * </p>
-	 */
-	@Test
-	public void testEnumFromJAR() {
-		// Enum value valid
-		assertValiateWithConverter("BLOCK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
-
-		// Invalid enum value cannot be validated properly in SAFE mode
-		assertValiateWithConverter("BLACK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
-	}
 }

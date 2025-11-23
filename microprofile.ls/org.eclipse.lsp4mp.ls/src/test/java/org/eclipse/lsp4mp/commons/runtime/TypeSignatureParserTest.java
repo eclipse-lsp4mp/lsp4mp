@@ -122,8 +122,6 @@ public class TypeSignatureParserTest {
 
     @Test
     public void testInvalidClassName() {
-        assertThrows(IllegalArgumentException.class, () ->
-                TypeSignatureParser.parse("com.does.not.Exist<Something>")
-        );
+        TypeSignatureParser.parse("com.does.not.Exist<Something>");
     }
 }

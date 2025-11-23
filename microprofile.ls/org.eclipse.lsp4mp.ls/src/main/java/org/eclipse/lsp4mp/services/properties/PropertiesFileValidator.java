@@ -259,7 +259,7 @@ class PropertiesFileValidator {
 					.getProjectRuntime();
 			if (projectRuntime != null) {
 				ExecutionMode preferredMode = executionSettings.getExecutionMode();
-				projectRuntime.validateValue(value, metadata.getType(), preferredMode,
+				projectRuntime.validateValue(value, metadata.getType(), projectInfo, preferredMode,
 						(errorMessage, source, code, converterStart, converterEnd) -> {
 							Range range = PositionUtils.createRange(start + converterStart,
 									start + converterStart + converterEnd, propertiesModel.getDocument());
@@ -379,10 +379,6 @@ class PropertiesFileValidator {
 				}
 			}
 		}
-	}
-
-	private static boolean isBuildtimePlaceholder(String str) {
-		return str.startsWith("${") && str.endsWith("}");
 	}
 
 	private void addDiagnosticsForDuplicates() {

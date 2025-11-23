@@ -16,6 +16,9 @@ package org.eclipse.lsp4mp.commons.runtime.converter.full;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
+import org.eclipse.lsp4mp.commons.runtime.TypeProvider;
 import org.eclipse.lsp4mp.commons.runtime.converter.AbstractConverterValidator;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterValidator;
 
@@ -133,5 +136,20 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 		this.getConverterMethod = getConverter;
 		this.convertMethod = convert;
 		return true;
+	}
+
+	@Override
+	public void refreshEnumType(EnumConstantsProvider enumConstNamesProvider, TypeProvider typeProvider,
+			ExecutionMode executionMode) {
+		Class<?> forType = getForType();
+		if (forType != null && forType.isEnum()) {
+			forType = (Class<?>) typeProvider.findType(forType.getTypeName(), enumConstNamesProvider,
+					executionMode);
+			try {
+				initialize();
+			} catch (Exception e) {
+				// Do nothing
+			}
+		}
 	}
 }

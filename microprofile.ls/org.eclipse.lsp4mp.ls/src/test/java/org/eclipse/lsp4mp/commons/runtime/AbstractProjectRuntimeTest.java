@@ -13,9 +13,12 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime;
 
+import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.getDefaultMicroProfileProjectInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterRuntimeSupportApi;
 import org.junit.Assert;
 
@@ -33,15 +36,20 @@ public abstract class AbstractProjectRuntimeTest {
 	}
 
 	public void assertValiateWithConverter(String value, String type, String... expectedMessages) {
+		assertValiateWithConverter(value, type, getDefaultMicroProfileProjectInfo(), expectedMessages);
+	}
+
+	public void assertValiateWithConverter(String value, String type, MicroProfileProjectInfo projectInfo,
+			String... expectedMessages) {
 		ConverterRuntimeSupportApi converterRuntimeSupport = projectRuntime
 				.getRuntimeSupport(ConverterRuntimeSupportApi.class, executionMode);
 		final List<String> actualMessages = new ArrayList<>();
-		converterRuntimeSupport.validate(value, type, (errorMessage, source, errorCode, start, end) -> {
+		converterRuntimeSupport.validate(value, type, projectInfo, (errorMessage, source, errorCode, start, end) -> {
 			actualMessages.add(errorMessage);
 		});
 		Assert.assertArrayEquals("", expectedMessages, actualMessages.toArray());
 	}
-	
+
 	public ExecutionMode getExecutionMode() {
 		return executionMode;
 	}

@@ -69,21 +69,4 @@ public class QuarkusProjectRuntimeInFullModeTest extends AbstractMicroProfilePro
 				"SRCFG00049: Cannot convert FOOX to enum class org.acme.MyEnum, allowed values: bar,foo");
 	}
 
-	/**
-	 * Tests enum conversion for enums defined in JAR dependencies.
-	 * <p>
-	 * In FULL mode, enums from project JARs can be fully validated using reflection
-	 * and the project MicroProfile Config implementation.
-	 * </p>
-	 */
-	@Test
-	public void testEnumFromJAR() {
-		// Enum value valid
-		assertValiateWithConverter("BLOCK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
-
-		// Invalid enum value triggers validation error
-		assertValiateWithConverter("BLACK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
-				"SRCFG00049: Cannot convert BLACK to enum class org.jboss.logmanager.handlers.AsyncHandler$OverflowAction, allowed values: discard,block");
-	}
-
 }

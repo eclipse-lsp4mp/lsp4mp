@@ -15,14 +15,16 @@ package org.eclipse.lsp4mp.commons.runtime;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.lsp4mp.commons.runtime.TypeSignatureParser.EmulateType;
+import org.eclipse.lsp4mp.commons.runtime.TypeSignatureParser.EnumType;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterRuntimeSupportApi;
-import org.eclipse.lsp4mp.commons.runtime.converter.DiagnosticsCollector;
 import org.eclipse.lsp4mp.commons.runtime.converter.full.FullConverterRuntimeSupport;
 import org.eclipse.lsp4mp.commons.runtime.converter.safe.SafeConverterRuntimeSupport;
 
@@ -40,7 +42,7 @@ import org.eclipse.lsp4mp.commons.runtime.converter.safe.SafeConverterRuntimeSup
  * @author Angelo ZERR
  * 
  */
-public class MicroProfileProjectRuntime {
+public class MicroProfileProjectRuntime implements TypeProvider {
 
 	private static final Logger LOGGER = Logger.getLogger(MicroProfileProjectRuntime.class.getName());
 
@@ -53,10 +55,6 @@ public class MicroProfileProjectRuntime {
 	 * runtimeClassLoader
 	 */
 	private final ClassLoader parentClassLoader;
-
-	/** Cache of loaded classes (String → Class) to avoid reloading */
-	private final Map<String, Type> safeClassTypes;
-	private final Map<String, Type> fullClassTypes;
 
 	/** Dedicated ClassLoader for the project runtime, created from the classpath */
 	private ProjectClassLoader runtimeClassLoader;
@@ -72,8 +70,6 @@ public class MicroProfileProjectRuntime {
 		// Initialize maps
 		safeRuntimesSupport = new HashMap<>();
 		fullRuntimesSupport = new HashMap<>();
-		safeClassTypes = new HashMap<>();
-		fullClassTypes = new HashMap<>();
 
 		parentClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -88,13 +84,14 @@ public class MicroProfileProjectRuntime {
 		registerRuntimeSupport(new FullConverterRuntimeSupport(this));
 	}
 
-	public void validateValue(String value, String type, ExecutionMode preferredMode, DiagnosticsCollector collector) {
+	public void validateValue(String value, String type, EnumConstantsProvider enumConstNamesProvider,
+			ExecutionMode preferredMode, DiagnosticsCollector collector) {
 		ConverterRuntimeSupportApi converterRuntimeSupport = getRuntimeSupport(ConverterRuntimeSupportApi.class,
 				preferredMode);
 		if (!converterRuntimeSupport.hasConfigProviderResolver()) {
 			converterRuntimeSupport = getRuntimeSupport(ConverterRuntimeSupportApi.class, ExecutionMode.SAFE);
 		}
-		converterRuntimeSupport.validate(value, type, collector);
+		converterRuntimeSupport.validate(value, type, enumConstNamesProvider, collector);
 	}
 
 	/**
@@ -138,7 +135,6 @@ public class MicroProfileProjectRuntime {
 		} else {
 			safeRuntimesSupport.put(runtimeSupport.getClassApi(), runtimeSupport);
 		}
-		;
 	}
 
 	/**
@@ -166,26 +162,36 @@ public class MicroProfileProjectRuntime {
 	 * Retrieves the Class corresponding to the given fully qualified name. Uses an
 	 * internal cache to avoid reloading the same class multiple times.
 	 *
-	 * @param type          fully qualified class name (FQCN)
+	 * @param type                   fully qualified class name (FQCN)
+	 * @param enumConstNamesProvider
 	 * @param executionMode
 	 * @return the corresponding Class, or null if not found
 	 */
-	public Type findClassType(String type, ExecutionMode executionMode) {
-		Map<String, Type> classTypes = executionMode == ExecutionMode.FULL ? fullClassTypes : safeClassTypes;
-		Type cl = classTypes.get(type);
-		if (cl == null) {
-			try {
-				cl = forNameSmart(type, executionMode);
-				// Load the class via the project's dedicated ClassLoader
-				classTypes.put(type, cl);
-			} catch (Exception e) {
-				// ignore if class does not exist
-			}
-		}
-		return cl;
+	@Override
+	public Type findType(String type, EnumConstantsProvider enumConstNamesProvider, ExecutionMode executionMode) {
+		ClassLoader classLoader = executionMode == ExecutionMode.FULL ? getRuntimeClassLoader() : parentClassLoader;
+		return findType(type, enumConstNamesProvider, classLoader);
 	}
 
-	private Type forNameSmart(String typeName, ExecutionMode executionMode) throws ClassNotFoundException {
+	public static Type findType(String type, EnumConstantsProvider enumConstNamesProvider, ClassLoader classLoader) {
+		try {
+			return forNameSmart(type, enumConstNamesProvider, classLoader);
+		} catch (Exception e) {
+			if ("jakarta.inject.Provider".equals(type)) {
+				return new EmulateType(type);
+			}
+			if (enumConstNamesProvider != null) {
+				List<String> enumConstNames = enumConstNamesProvider.getConstants(type);
+				if (enumConstNames != null) {
+					return new EnumType(type, enumConstNames);
+				}
+			}
+		}
+		return null;
+	}
+
+	private static Type forNameSmart(String typeName, EnumConstantsProvider enumConstNamesProvider,
+			ClassLoader classLoader) throws ClassNotFoundException {
 
 		// Primitives
 		switch (typeName) {
@@ -209,15 +215,14 @@ public class MicroProfileProjectRuntime {
 			return void.class;
 		}
 
-		ClassLoader classLoader = executionMode == ExecutionMode.FULL ? getRuntimeClassLoader() : parentClassLoader;
 		if (typeName.endsWith("[]")) {
 			String element = typeName.substring(0, typeName.length() - 2);
-			Class<?> elementClass = (Class<?>) forNameSmart(element, executionMode);
+			Class<?> elementClass = (Class<?>) forNameSmart(element, enumConstNamesProvider, classLoader);
 			return java.lang.reflect.Array.newInstance(elementClass, 0).getClass();
 		} else if (typeName.indexOf('<') == -1) {
 			return Class.forName(typeName, false, classLoader);
 		} else {
-			return TypeSignatureParser.parse(typeName, classLoader);
+			return TypeSignatureParser.parse(typeName, enumConstNamesProvider, classLoader);
 		}
 	}
 

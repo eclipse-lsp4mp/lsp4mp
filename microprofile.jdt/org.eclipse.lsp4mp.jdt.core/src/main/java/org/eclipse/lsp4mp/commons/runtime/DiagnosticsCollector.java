@@ -11,7 +11,9 @@
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.lsp4mp.commons.runtime.converter;
+package org.eclipse.lsp4mp.commons.runtime;
+
+import org.eclipse.lsp4mp.commons.runtime.converter.ConverterValidator;
 
 /**
  * Functional interface used to collect diagnostics produced during the
