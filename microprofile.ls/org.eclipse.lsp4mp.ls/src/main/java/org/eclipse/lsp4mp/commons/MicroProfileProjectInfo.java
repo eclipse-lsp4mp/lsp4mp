@@ -14,9 +14,14 @@
 package org.eclipse.lsp4mp.commons;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collector;
 
 import org.eclipse.lsp4mp.commons.metadata.ConfigurationMetadata;
+import org.eclipse.lsp4mp.commons.metadata.ItemHint;
+import org.eclipse.lsp4mp.commons.metadata.ValueHint;
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
 
 /**
  * MicroProfile Project Information
@@ -24,7 +29,7 @@ import org.eclipse.lsp4mp.commons.metadata.ConfigurationMetadata;
  * @author Angelo ZERR
  *
  */
-public class MicroProfileProjectInfo extends ConfigurationMetadata {
+public class MicroProfileProjectInfo extends ConfigurationMetadata implements EnumConstantsProvider {
 
 	public static final MicroProfileProjectInfo EMPTY_PROJECT_INFO;
 
@@ -38,7 +43,7 @@ public class MicroProfileProjectInfo extends ConfigurationMetadata {
 	private String projectURI;
 
 	private ClasspathKind classpathKind;
-	
+
 	private Set<String> classpath;
 
 	/**
@@ -80,8 +85,22 @@ public class MicroProfileProjectInfo extends ConfigurationMetadata {
 	public Set<String> getClasspath() {
 		return classpath;
 	}
-	
+
 	public void setClasspath(Set<String> classpath) {
 		this.classpath = classpath;
+	}
+
+	@Override
+	public List<String> getConstants(String enumType) {
+		ItemHint hint = getHint(enumType);
+		if (hint != null) {
+			return hint
+					.getValues()
+					.stream()
+					.map(ValueHint::getValue)
+					.toList();
+					
+		}
+		return null;
 	}
 }

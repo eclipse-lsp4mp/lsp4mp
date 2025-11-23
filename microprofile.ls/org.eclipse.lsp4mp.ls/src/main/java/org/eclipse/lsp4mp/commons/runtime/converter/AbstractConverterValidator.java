@@ -17,6 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.lsp4mp.commons.runtime.DiagnosticsCollector;
+
 /**
  * Base class for implementing a MicroProfile Config value validator with
  * conversion support.
@@ -49,7 +51,7 @@ public abstract class AbstractConverterValidator<T> implements ConverterValidato
 	private final T config;
 
 	/** The target type for conversion */
-	private final Class<?> forType;
+	private Class<?> forType;
 
 	/** Indicates whether the validator has been prepared */
 	private boolean prepared;

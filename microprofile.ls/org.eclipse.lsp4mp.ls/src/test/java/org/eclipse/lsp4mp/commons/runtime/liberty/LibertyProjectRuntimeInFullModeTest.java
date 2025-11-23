@@ -78,19 +78,4 @@ public class LibertyProjectRuntimeInFullModeTest extends AbstractMicroProfilePro
 				"SRCFG00049: Cannot convert FOOX to enum class org.acme.MyEnum, allowed values: bar,foo");
 	}
 
-	/**
-	 * Tests enum conversion for enums defined in JAR dependencies.
-	 * <p>
-	 * Enums from external JARs are not available in Liberty project classpath, so
-	 * validation cannot be fully performed.
-	 * </p>
-	 */
-	@Test
-	public void testEnumFromJAR() {
-		// Enum value valid
-		assertValiateWithConverter("BLOCK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
-
-		// Invalid enum value is not fully validated
-		assertValiateWithConverter("BLACK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
-	}
 }

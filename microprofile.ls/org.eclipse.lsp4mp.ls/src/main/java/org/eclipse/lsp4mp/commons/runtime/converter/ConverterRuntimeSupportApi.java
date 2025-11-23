@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter;
 
+import org.eclipse.lsp4mp.commons.runtime.DiagnosticsCollector;
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileRuntimeSupport;
 
@@ -91,9 +93,12 @@ public interface ConverterRuntimeSupportApi extends MicroProfileRuntimeSupport {
 	 * </li>
 	 * </ul>
 	 *
-	 * @param value     the raw configuration value to validate
-	 * @param type      the fully-qualified type name expected
-	 * @param collector the diagnostics collector used to report validation errors
+	 * @param value          the raw configuration value to validate
+	 * @param type           the fully-qualified type name expected
+	 * @param enumConstNames
+	 * @param collector      the diagnostics collector used to report validation
+	 *                       errors
 	 */
-	void validate(String value, String type, DiagnosticsCollector collector);
+	void validate(String value, String type, EnumConstantsProvider enumConstNamesProvider,
+			DiagnosticsCollector collector);
 }

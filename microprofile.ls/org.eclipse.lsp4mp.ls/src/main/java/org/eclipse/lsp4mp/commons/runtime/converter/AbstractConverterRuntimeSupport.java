@@ -27,9 +27,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.lsp4mp.commons.runtime.AbstractMicroProfileRuntimeSupport;
+import org.eclipse.lsp4mp.commons.runtime.DiagnosticsCollector;
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileRuntimeSupport;
+import org.eclipse.lsp4mp.commons.runtime.TypeSignatureParser.EmulateType;
+import org.eclipse.lsp4mp.commons.runtime.TypeSignatureParser.EnumType;
+import org.eclipse.lsp4mp.commons.runtime.converter.safe.EnumTypeConverterValidator;
 
 /**
  * Base class providing runtime support for validating and converting string
@@ -103,15 +108,19 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	 * @param collector diagnostics collector to report validation errors
 	 */
 	@Override
-	public void validate(String value, String type, DiagnosticsCollector collector) {
+	public void validate(String value, String type, EnumConstantsProvider enumConstNamesProvider,
+			DiagnosticsCollector collector) {
 		try {
 			T cfg = getConfig();
 			if (cfg == null) {
 				return;
 			}
 			ConverterValidator validator = converterCache.computeIfAbsent(type,
-					t -> resolveConverter(getProject().findClassType(t, getExecutionMode()), cfg));
+					t -> resolveConverter(getProject().findType(t, enumConstNamesProvider, getExecutionMode()), cfg));
 			if (validator.canValidate()) {
+				// Refresh if needed Enum type if validator manages enum type
+				validator.refreshEnumType(enumConstNamesProvider, getProject(), getExecutionMode());
+				// Validate value
 				validator.validate(value, collector);
 			}
 		} catch (Throwable e) {
@@ -177,11 +186,14 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	 * @param config the configuration instance
 	 * @return a ConverterValidator for the given type, or a no-op validator if none
 	 */
-	protected ConverterValidator resolveConverter(Type type, T config) {
+	private ConverterValidator resolveConverter(Type type, T config) {
 		if (type == null) {
 			return NULL_CONVERTER;
 		}
-		Class rawType = rawTypeOf(type);
+		if (type instanceof EnumType) {
+			return new EnumTypeConverterValidator((EnumType) type);
+		}
+		Type rawType = rawTypeOf(type);
 		if (type instanceof ParameterizedType) {
 			Type[] typeArgs = ((ParameterizedType) type).getActualTypeArguments();
 			if (rawType == List.class || rawType == Set.class) {
@@ -193,11 +205,15 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 			if (rawType == Optional.class) {
 				return newOptionalConverter(resolveConverter(typeArgs[0], config));
 			}
-			if (rawType == Supplier.class || "jakarta.inject.Provider".equals(rawType.getName())) {
+			if (rawType == Supplier.class
+					|| (rawType != null && "jakarta.inject.Provider".equals(rawType.getTypeName()))) {
 				return resolveConverter(typeArgs[0], config);
 			}
-		} else if (rawType != null && rawType.isArray()) {
-			return newCollectionConverter(resolveConverter(rawType.getComponentType(), config));
+		} else if (rawType instanceof Class) {
+			Class rawTypeClass = (Class) rawType;
+			if (rawTypeClass.isArray()) {
+				return newCollectionConverter(resolveConverter(rawTypeClass.getComponentType(), config));
+			}
 		}
 		if (!(type instanceof Class)) {
 			return NULL_CONVERTER;
@@ -224,13 +240,13 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 	 * @param type the type to resolve
 	 * @return the raw class, or null if it cannot be determined
 	 */
-	static <T> Class<T> rawTypeOf(Type type) {
-		if (type instanceof Class) {
-			return (Class) type;
+	static Type rawTypeOf(Type type) {
+		if (type instanceof Class || type instanceof EmulateType) {
+			return type;
 		} else if (type instanceof ParameterizedType) {
 			return rawTypeOf(((ParameterizedType) type).getRawType());
 		} else if (type instanceof GenericArrayType) {
-			return (Class<T>) Array.newInstance(rawTypeOf(((GenericArrayType) type).getGenericComponentType()), 0)
+			return Array.newInstance((Class) rawTypeOf(((GenericArrayType) type).getGenericComponentType()), 0)
 					.getClass();
 		} else {
 			return null;

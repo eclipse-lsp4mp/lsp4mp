@@ -25,11 +25,13 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4mp.commons.DocumentFormat;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.jdt.core.java.AbtractJavaContext;
@@ -154,14 +156,19 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 			return;
 		}
 		ExecutionMode preferredMode = getSettings().getMode();
-		String fqn = toQualifiedTypeString(fieldBinding);
-		projectRuntime.validateValue(defValue, fqn, preferredMode, (errorMessage, source, code, start, end) -> {
-			addDiagnostic(errorMessage, source, defaultValueExpr,
-					MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE.getCode(), valueSeverity, start + 1, end);
-		});
+
+		EnumConstantsProvider.SimpleEnumConstantsProvider provider = new EnumConstantsProvider.SimpleEnumConstantsProvider();
+		String fqn = toQualifiedTypeString(fieldBinding, provider);
+		projectRuntime.validateValue(defValue, fqn, provider, preferredMode,
+				(errorMessage, source, code, start, end) -> {
+					addDiagnostic(errorMessage, source, defaultValueExpr,
+							MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE.getCode(), valueSeverity, start + 1,
+							end);
+				});
 	}
 
-	private static String toQualifiedTypeString(ITypeBinding binding) {
+	private static String toQualifiedTypeString(ITypeBinding binding,
+			EnumConstantsProvider.SimpleEnumConstantsProvider provider) {
 		if (binding == null) {
 			return "";
 		}
@@ -176,7 +183,18 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 		}
 
 		// Base qualified name (e.g., java.util.List)
-		StringBuilder sb = new StringBuilder(binding.getErasure().getBinaryName());
+		String baseQualifieldName = binding.getErasure().getBinaryName();
+		if (binding.isEnum()) {
+			List<String> enumConstNames = new ArrayList<>();
+			for (IVariableBinding field : binding.getDeclaredFields()) {
+				if (field.isEnumConstant()) {
+					enumConstNames.add(field.getName());
+				}
+			}
+			provider.addEnumConstants(baseQualifieldName, enumConstNames);
+		}
+
+		StringBuilder sb = new StringBuilder(baseQualifieldName);
 
 		// Generic type arguments
 		ITypeBinding[] typeArguments = binding.getTypeArguments();
@@ -185,7 +203,7 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 			for (int i = 0; i < typeArguments.length; i++) {
 				if (i > 0)
 					sb.append(", ");
-				sb.append(toQualifiedTypeString(typeArguments[i]));
+				sb.append(toQualifiedTypeString(typeArguments[i], provider));
 			}
 			sb.append(">");
 		}

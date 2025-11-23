@@ -56,6 +56,10 @@ import java.util.List;
  */
 public class TypeSignatureParser {
 
+	public static Type parse(String signature) {
+		return parse(signature, null);
+	}
+
 	/**
 	 * Parses a type signature using the current thread's context class loader.
 	 *
@@ -63,8 +67,8 @@ public class TypeSignatureParser {
 	 * @return a {@link Type} representation of the signature
 	 * @throws IllegalArgumentException if a class cannot be found
 	 */
-	public static Type parse(String signature) {
-		return parse(signature, Thread.currentThread().getContextClassLoader());
+	public static Type parse(String signature, EnumConstantsProvider enumConstNamesProvider) {
+		return parse(signature, enumConstNamesProvider, Thread.currentThread().getContextClassLoader());
 	}
 
 	/**
@@ -75,8 +79,41 @@ public class TypeSignatureParser {
 	 * @return a {@link Type} representing the parsed signature
 	 * @throws IllegalArgumentException if a class cannot be found
 	 */
-	public static Type parse(String signature, ClassLoader classLoader) {
-		return new Parser(signature, classLoader).parseType();
+	public static Type parse(String signature, EnumConstantsProvider enumConstNamesProvider, ClassLoader classLoader) {
+		return new Parser(signature, enumConstNamesProvider, classLoader).parseType();
+	}
+
+	public static class EmulateType implements Type {
+
+		private final String typeName;
+
+		public EmulateType(String typeName) {
+			this.typeName = typeName;
+		}
+
+		@Override
+		public String getTypeName() {
+			return typeName;
+		}
+
+	}
+
+	public static class EnumType extends EmulateType {
+		private List<String> enumConstNames;
+
+		public EnumType(String typeName, List<String> enumConstNames) {
+			super(typeName);
+			this.enumConstNames = enumConstNames;
+		}
+
+		public List<String> getEnumConstants() {
+			return enumConstNames;
+		}
+
+		public void setEnumConstNames(List<String> enumConstNames) {
+			this.enumConstNames = enumConstNames;
+		}
+
 	}
 
 	/**
@@ -86,9 +123,11 @@ public class TypeSignatureParser {
 		private final String s;
 		private int pos = 0;
 		private final ClassLoader classLoader;
+		private final EnumConstantsProvider enumConstNamesProvider;
 
-		Parser(String s, ClassLoader classLoader) {
+		Parser(String s, EnumConstantsProvider enumConstNamesProvider, ClassLoader classLoader) {
 			this.s = s;
+			this.enumConstNamesProvider = enumConstNamesProvider;
 			this.classLoader = classLoader;
 		}
 
@@ -190,11 +229,7 @@ public class TypeSignatureParser {
 		 * @throws IllegalArgumentException if the class cannot be found
 		 */
 		Type loadClass(String name) {
-			try {
-				return Class.forName(name, false, classLoader);
-			} catch (ClassNotFoundException e) {
-				throw new IllegalArgumentException("Unknown type: " + name);
-			}
+			return MicroProfileProjectRuntime.findType(name, enumConstNamesProvider, classLoader);
 		}
 
 		/**

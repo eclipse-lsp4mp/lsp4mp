@@ -13,6 +13,12 @@
  *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime;
 
+import java.util.ArrayList;
+
+import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
+import org.eclipse.lsp4mp.commons.metadata.ItemHint;
+import org.eclipse.lsp4mp.commons.metadata.ItemMetadata;
+import org.eclipse.lsp4mp.commons.metadata.ValueHint;
 import org.junit.Test;
 
 /**
@@ -32,15 +38,6 @@ import org.junit.Test;
  * values pass and invalid values produce appropriate diagnostic messages.
  * </p>
  * 
- * <p>
- * Example types tested include:
- * </p>
- * <ul>
- * <li>Primitive types: int, Integer</li>
- * <li>Arrays: int[], Integer[]</li>
- * <li>Collections: List&lt;Integer&gt;</li>
- * <li>Class references: Class&lt;Object&gt;</li>
- * </ul>
  *
  * @author Angelo ZERR
  */
@@ -72,6 +69,33 @@ public abstract class AbstractMicroProfileProjectRuntimeTest extends AbstractPro
 	}
 
 	@Test
+	public void testOptionalInteger() {
+		assertValiateWithConverter("1", "java.util.Optional<java.lang.Integer>");
+		assertValiateWithConverter("1X", "java.util.Optional<java.lang.Integer>",
+				"SRCFG00029: Expected an integer value, got \"1X\"");
+	}
+
+	@Test
+	public void testOptionalInt() {
+		assertValiateWithConverter("1", "java.util.OptionalInt");
+		assertValiateWithConverter("1X", "java.util.OptionalInt", "SRCFG00029: Expected an integer value, got \"1X\"");
+	}
+
+	@Test
+	public void testSupplierInteger() {
+		assertValiateWithConverter("1", "java.util.function.Supplier<java.lang.Integer>");
+		assertValiateWithConverter("1X", "java.util.function.Supplier<java.lang.Integer>",
+				"SRCFG00029: Expected an integer value, got \"1X\"");
+	}
+
+	@Test
+	public void testJakartaInjectProviderInteger() {
+		assertValiateWithConverter("1", "jakarta.inject.Provider<java.lang.Integer>");
+		assertValiateWithConverter("1X", "jakarta.inject.Provider<java.lang.Integer>",
+				"SRCFG00029: Expected an integer value, got \"1X\"");
+	}
+
+	@Test
 	public void testIntArray() {
 		assertValiateWithConverter("1,2,3,4", "int[]");
 		assertValiateWithConverter("1,2X,3x,4", "int[]", "SRCFG00029: Expected an integer value, got \"2X\"",
@@ -95,7 +119,96 @@ public abstract class AbstractMicroProfileProjectRuntimeTest extends AbstractPro
 	}
 
 	@Test
-	public void testClassObject() {
-		assertValiateWithConverter("java.lang.String", "java.lang.Class<java.lang.Object>");
+	public void testIntegerSet() {
+		assertValiateWithConverter("1,2,3,4", "java.util.Set<java.lang.Integer>");
+		assertValiateWithConverter("1,2X,3x,4", "java.lang.Integer[]",
+				"SRCFG00029: Expected an integer value, got \"2X\"",
+				"SRCFG00029: Expected an integer value, got \"3x\"");
 	}
+
+	@Test
+	public void testClassObject() {
+		assertValiateWithConverter("foo", "java.lang.Class<java.lang.Object>");
+	}
+
+	@Test
+	public void testWrongClass() {
+		assertValiateWithConverter("foo", "java.lang.WrongClass<java.lang.Object>");
+	}
+
+	@Test
+	public void testEnum() {
+		// Enum value valid
+		assertValiateWithConverter("BLOCK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction");
+
+		// Invalid enum value triggers validation error
+		assertValiateWithConverter("BLACK", "org.jboss.logmanager.handlers.AsyncHandler$OverflowAction",
+				"SRCFG00049: Cannot convert BLACK to enum class org.jboss.logmanager.handlers.AsyncHandler$OverflowAction, allowed values: discard,block");
+	}
+
+	@Test
+	public void testJakartaInjectProviderEnum() {
+		// Enum value valid
+		assertValiateWithConverter("BLOCK",
+				"jakarta.inject.Provider<org.jboss.logmanager.handlers.AsyncHandler$OverflowAction>");
+
+		// Invalid enum value triggers validation error
+		assertValiateWithConverter("BLACK",
+				"jakarta.inject.Provider<org.jboss.logmanager.handlers.AsyncHandler$OverflowAction>",
+				"SRCFG00049: Cannot convert BLACK to enum class org.jboss.logmanager.handlers.AsyncHandler$OverflowAction, allowed values: discard,block");
+	}
+
+	@Test
+	public void testRefreshEnumValues() {
+		MicroProfileProjectInfo info = new MicroProfileProjectInfo();
+		info.setProperties(new ArrayList<>());
+		info.setHints(new ArrayList<>());
+
+		// Create enum io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType
+
+		// fill properties
+		ItemMetadata p = new ItemMetadata();
+		p.setName("io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType");
+		p.setSourceType("io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType");
+		info.getProperties().add(p);
+
+		// fill hints
+		ItemHint hint = new ItemHint();
+		hint.setName("io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType");
+		hint.setValues(new ArrayList<>());
+		info.getHints().add(hint);
+
+		ValueHint webAppValue = new ValueHint();
+		webAppValue.setValue("WEB_APP");
+		hint.getValues().add(webAppValue);
+
+		ValueHint value = new ValueHint();
+		value.setValue("SERVICE");
+		hint.getValues().add(value);
+
+		// Test 1) FOO doesn't exist
+		assertValiateWithConverter("WEB_APP", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+		assertValiateWithConverter("SERVICE", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+		assertValiateWithConverter("FOO", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info,
+				"SRCFG00049: Cannot convert FOO to enum class io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType, allowed values: web-app,service");
+
+		// Test 2) Add FOO
+		value = new ValueHint();
+		value.setValue("FOO");
+		hint.getValues().add(value);
+
+		assertValiateWithConverter("WEB_APP", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+		assertValiateWithConverter("SERVICE", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+		assertValiateWithConverter("FOO", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+
+		// Test 3) Remove WEB_APP
+		hint.getValues().remove(webAppValue);
+
+		assertValiateWithConverter("WEB_APP", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info,
+				"SRCFG00049: Cannot convert WEB_APP to enum class io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType, allowed values: service,foo");
+		assertValiateWithConverter("SERVICE", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+		assertValiateWithConverter("FOO", "io.quarkus.oidc.runtime.OidcTenantConfig.ApplicationType", info);
+
+	}
+
 }

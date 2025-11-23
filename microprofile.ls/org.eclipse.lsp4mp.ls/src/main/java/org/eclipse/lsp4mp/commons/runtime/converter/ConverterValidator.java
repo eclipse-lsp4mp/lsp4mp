@@ -13,6 +13,11 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter;
 
+import org.eclipse.lsp4mp.commons.runtime.DiagnosticsCollector;
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
+import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
+import org.eclipse.lsp4mp.commons.runtime.TypeProvider;
+
 /**
  * Represents a validator that can check a string value against a specific type
  * using the project's MicroProfile Config converters.
@@ -25,29 +30,34 @@ package org.eclipse.lsp4mp.commons.runtime.converter;
  */
 public interface ConverterValidator {
 
-    /**
-     * Validates the given value and collects diagnostics if the value is invalid.
-     *
-     * @param value     the string value to validate
-     * @param start     the start offset in the source (for diagnostics)
-     * @param collector collector used to report validation errors
-     */
-    void validate(String value, int start, DiagnosticsCollector collector);
+	/**
+	 * Validates the given value and collects diagnostics if the value is invalid.
+	 *
+	 * @param value     the string value to validate
+	 * @param start     the start offset in the source (for diagnostics)
+	 * @param collector collector used to report validation errors
+	 */
+	void validate(String value, int start, DiagnosticsCollector collector);
 
-    /**
-     * Validates the given value assuming start offset 0.
-     *
-     * @param value     the string value to validate
-     * @param collector collector used to report validation errors
-     */
-    default void validate(String value, DiagnosticsCollector collector) {
-        validate(value, 0, collector);
-    }
+	/**
+	 * Validates the given value assuming start offset 0.
+	 *
+	 * @param value     the string value to validate
+	 * @param collector collector used to report validation errors
+	 */
+	default void validate(String value, DiagnosticsCollector collector) {
+		validate(value, 0, collector);
+	}
 
-    /**
-     * Indicates whether this validator is ready to perform validation.
-     *
-     * @return true if the validator can validate values for its type, false otherwise
-     */
-    boolean canValidate();
+	default void refreshEnumType(EnumConstantsProvider enumConstNamesProvider, TypeProvider typeProvider, ExecutionMode executionMode) {
+		// Do nothing
+	}
+	
+	/**
+	 * Indicates whether this validator is ready to perform validation.
+	 *
+	 * @return true if the validator can validate values for its type, false
+	 *         otherwise
+	 */
+	boolean canValidate();
 }
