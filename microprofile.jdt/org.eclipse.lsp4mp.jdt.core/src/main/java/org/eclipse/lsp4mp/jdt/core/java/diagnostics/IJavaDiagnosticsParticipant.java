@@ -13,11 +13,8 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.core.java.diagnostics;
 
-import java.util.List;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.lsp4j.Diagnostic;
 
 /**
  * Java diagnostics participants API.
@@ -65,11 +62,9 @@ public interface IJavaDiagnosticsParticipant {
 	 * @param context the java diagnostics context
 	 * @param monitor the progress monitor
 	 *
-	 * @return diagnostics list and null otherwise.
-	 *
 	 * @throws CoreException
 	 */
-	List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException;
+	void collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException;
 
 	/**
 	 * End diagnostics collection.

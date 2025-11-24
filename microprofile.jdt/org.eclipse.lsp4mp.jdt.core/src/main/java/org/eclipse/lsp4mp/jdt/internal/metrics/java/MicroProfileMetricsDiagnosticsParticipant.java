@@ -13,35 +13,30 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.internal.metrics.java;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.DEPENDENT_JAKARTA_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.DEPENDENT_JAVAX_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.DIAGNOSTIC_SOURCE;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.GAUGE_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.METRIC_ID;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.REQUEST_SCOPED_JAKARTA_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.REQUEST_SCOPED_JAVAX_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.SESSION_SCOPED_JAKARTA_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.SESSION_SCOPED_JAVAX_ANNOTATION;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
-import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4mp.commons.DocumentFormat;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.IJavaDiagnosticsParticipant;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.JavaDiagnosticsContext;
 import org.eclipse.lsp4mp.jdt.core.utils.AnnotationUtils;
-import org.eclipse.lsp4mp.jdt.core.utils.IJDTUtils;
 import org.eclipse.lsp4mp.jdt.core.utils.JDTTypeUtils;
 import org.eclipse.lsp4mp.jdt.core.utils.PositionUtils;
-
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.METRIC_ID;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.GAUGE_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.REQUEST_SCOPED_JAVAX_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.SESSION_SCOPED_JAVAX_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.DEPENDENT_JAVAX_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.REQUEST_SCOPED_JAKARTA_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.SESSION_SCOPED_JAKARTA_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.DEPENDENT_JAKARTA_ANNOTATION;
-import static org.eclipse.lsp4mp.jdt.internal.metrics.MicroProfileMetricsConstants.DIAGNOSTIC_SOURCE;
 
 /**
  * 
@@ -69,17 +64,14 @@ public class MicroProfileMetricsDiagnosticsParticipant implements IJavaDiagnosti
 	}
 
 	@Override
-	public List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor)
-			throws CoreException {
+	public void collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
 		ITypeRoot typeRoot = context.getTypeRoot();
 		IJavaElement[] elements = typeRoot.getChildren();
-		List<Diagnostic> diagnostics = new ArrayList<>();
-		collectDiagnostics(elements, diagnostics, context, monitor);
-		return diagnostics;
+		collectDiagnostics(elements, context, monitor);
 	}
 
-	private static void collectDiagnostics(IJavaElement[] elements, List<Diagnostic> diagnostics,
-			JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
+	private static void collectDiagnostics(IJavaElement[] elements, JavaDiagnosticsContext context,
+			IProgressMonitor monitor) throws CoreException {
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
 				return;
@@ -87,17 +79,15 @@ public class MicroProfileMetricsDiagnosticsParticipant implements IJavaDiagnosti
 			if (element.getElementType() == IJavaElement.TYPE) {
 				IType type = (IType) element;
 				if (!type.isInterface()) {
-					validateClassType(type, diagnostics, context, monitor);
+					validateClassType(type, context, monitor);
 				}
 				continue;
 			}
 		}
 	}
 
-	private static void validateClassType(IType classType, List<Diagnostic> diagnostics, JavaDiagnosticsContext context,
-			IProgressMonitor monitor) throws CoreException {
-		String uri = context.getUri();
-		IJDTUtils utils = context.getUtils();
+	private static void validateClassType(IType classType, JavaDiagnosticsContext context, IProgressMonitor monitor)
+			throws CoreException {
 		DocumentFormat documentFormat = context.getDocumentFormat();
 		boolean hasInvalidScopeAnnotation = AnnotationUtils.hasAnnotation(classType, REQUEST_SCOPED_JAVAX_ANNOTATION)
 				|| AnnotationUtils.hasAnnotation(classType, SESSION_SCOPED_JAVAX_ANNOTATION)
@@ -114,15 +104,14 @@ public class MicroProfileMetricsDiagnosticsParticipant implements IJavaDiagnosti
 				}
 				if (element.getElementType() == IJavaElement.METHOD) {
 					IMethod method = (IMethod) element;
-					validateMethod(classType, method, diagnostics, context);
+					validateMethod(classType, method, context);
 				}
 			}
 		}
 	}
 
-	private static void validateMethod(IType classType, IMethod method, List<Diagnostic> diagnostics,
-			JavaDiagnosticsContext context) throws CoreException {
-		String uri = context.getUri();
+	private static void validateMethod(IType classType, IMethod method, JavaDiagnosticsContext context)
+			throws CoreException {
 		DocumentFormat documentFormat = context.getDocumentFormat();
 		boolean hasGaugeAnnotation = AnnotationUtils.hasAnnotation(method, GAUGE_ANNOTATION);
 
@@ -132,9 +121,8 @@ public class MicroProfileMetricsDiagnosticsParticipant implements IJavaDiagnosti
 		// Suggest that @AnnotationScoped is used instead.</li>
 		if (hasGaugeAnnotation) {
 			Range cdiBeanRange = PositionUtils.toNameRange(classType, context.getUtils());
-			Diagnostic d = context.createDiagnostic(uri, createDiagnostic1Message(classType, documentFormat),
-					cdiBeanRange, DIAGNOSTIC_SOURCE, MicroProfileMetricsErrorCode.ApplicationScopedAnnotationMissing);
-			diagnostics.add(d);
+			context.addDiagnostic(createDiagnostic1Message(classType, documentFormat), cdiBeanRange, DIAGNOSTIC_SOURCE,
+					MicroProfileMetricsErrorCode.ApplicationScopedAnnotationMissing);
 		}
 	}
 
