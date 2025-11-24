@@ -19,7 +19,7 @@ pipeline {
           stages {
             stage("Build LSP4MP JDT.LS extension"){
               steps {
-                sh 'cd microprofile.jdt && ./mvnw clean verify -B  -Peclipse-sign && cd ..'
+                sh 'cd microprofile.jdt && ./mvnw clean verify -B -DskipTests -Peclipse-sign && cd ..'
               }
             }
             stage('Deploy to downloads.eclipse.org') {
