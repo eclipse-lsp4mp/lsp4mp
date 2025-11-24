@@ -57,12 +57,11 @@ public class JavaDiagnosticsDefinition extends AbstractJavaFeatureDefinition<IJa
 	}
 
 	@Override
-	public List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) {
+	public void collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) {
 		try {
-			return getParticipant().collectDiagnostics(context, monitor);
+			getParticipant().collectDiagnostics(context, monitor);
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error while collecting diagnostics", e);
-			return null;
+			LOGGER.log(Level.SEVERE, "Error while collecting diagnostics", e);			
 		}
 	}
 

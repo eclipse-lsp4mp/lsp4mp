@@ -14,11 +14,9 @@
 package org.eclipse.lsp4mp.jdt.internal.core.java.validators;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.lsp4j.Diagnostic;
@@ -38,14 +36,7 @@ import org.eclipse.lsp4mp.jdt.core.java.validators.JavaASTValidator;
 public class JavaASTDiagnosticsParticipant implements IJavaDiagnosticsParticipant {
 
 	@Override
-	public List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor)
-			throws CoreException {
-		collectDiagnosticsInFile(context, monitor);
-		return context.getDiagnostics();
-	}
-
-	private static void collectDiagnosticsInFile(JavaDiagnosticsContext context, IProgressMonitor monitor)
-			throws JavaModelException {
+	public void collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
 		// Collect the list of JavaASTValidator which are adapted for the current AST
 		// compilation unit to validate.
 		Collection<ASTVisitor> validators = JavaASTValidatorRegistry.getInstance().getValidators(context, monitor);

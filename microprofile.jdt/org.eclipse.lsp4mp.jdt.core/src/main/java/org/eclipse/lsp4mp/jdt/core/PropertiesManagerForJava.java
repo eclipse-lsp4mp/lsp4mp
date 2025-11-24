@@ -339,7 +339,7 @@ public class PropertiesManagerForJava {
 		}
 
 		// Collect all adapted diagnostics participant
-		JavaDiagnosticsContext context = new JavaDiagnosticsContext(uri, typeRoot, utils, documentFormat, settings);
+		JavaDiagnosticsContext context = new JavaDiagnosticsContext(uri, typeRoot, utils, documentFormat, settings, diagnostics);
 		List<JavaDiagnosticsDefinition> definitions = JavaFeaturesRegistry.getInstance().getJavaDiagnosticsDefinitions()
 				.stream().filter(definition -> definition.isAdaptedForDiagnostics(context, monitor))
 				.collect(Collectors.toList());
@@ -350,10 +350,7 @@ public class PropertiesManagerForJava {
 		// Begin, collect, end participants
 		definitions.forEach(definition -> definition.beginDiagnostics(context, monitor));
 		definitions.forEach(definition -> {
-			List<Diagnostic> collectedDiagnostics = definition.collectDiagnostics(context, monitor);
-			if (collectedDiagnostics != null && !collectedDiagnostics.isEmpty()) {
-				diagnostics.addAll(collectedDiagnostics);
-			}
+			definition.collectDiagnostics(context, monitor);			
 		});
 		definitions.forEach(definition -> definition.endDiagnostics(context, monitor));
 	}

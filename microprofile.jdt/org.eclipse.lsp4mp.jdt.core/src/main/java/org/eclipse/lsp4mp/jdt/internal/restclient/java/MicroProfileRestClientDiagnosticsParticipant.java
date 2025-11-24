@@ -13,13 +13,11 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.internal.restclient.java;
 
-import static org.eclipse.lsp4mp.jdt.core.MicroProfileConfigConstants.INJECT_JAVAX_ANNOTATION;
 import static org.eclipse.lsp4mp.jdt.core.MicroProfileConfigConstants.INJECT_JAKARTA_ANNOTATION;
+import static org.eclipse.lsp4mp.jdt.core.MicroProfileConfigConstants.INJECT_JAVAX_ANNOTATION;
 import static org.eclipse.lsp4mp.jdt.internal.restclient.MicroProfileRestClientConstants.REGISTER_REST_CLIENT_ANNOTATION;
 import static org.eclipse.lsp4mp.jdt.internal.restclient.MicroProfileRestClientConstants.REST_CLIENT_ANNOTATION;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.core.runtime.CoreException;
@@ -36,7 +34,6 @@ import org.eclipse.jdt.core.search.SearchMatch;
 import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
-import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4mp.commons.DocumentFormat;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.IJavaDiagnosticsParticipant;
@@ -90,17 +87,14 @@ public class MicroProfileRestClientDiagnosticsParticipant implements IJavaDiagno
 	}
 
 	@Override
-	public List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor)
-			throws CoreException {
+	public void collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
 		ITypeRoot typeRoot = context.getTypeRoot();
 		IJavaElement[] elements = typeRoot.getChildren();
-		List<Diagnostic> diagnostics = new ArrayList<>();
-		collectDiagnostics(elements, diagnostics, context, monitor);
-		return diagnostics;
+		collectDiagnostics(elements, context, monitor);
 	}
 
-	private static void collectDiagnostics(IJavaElement[] elements, List<Diagnostic> diagnostics,
-			JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
+	private static void collectDiagnostics(IJavaElement[] elements, JavaDiagnosticsContext context,
+			IProgressMonitor monitor) throws CoreException {
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
 				return;
@@ -108,31 +102,29 @@ public class MicroProfileRestClientDiagnosticsParticipant implements IJavaDiagno
 			if (element.getElementType() == IJavaElement.TYPE) {
 				IType type = (IType) element;
 				if (type.isInterface()) {
-					validateInterfaceType(type, diagnostics, context, monitor);
+					validateInterfaceType(type, context, monitor);
 				} else {
-					validateClassType(type, diagnostics, context, monitor);
+					validateClassType(type, context, monitor);
 				}
 				continue;
 			}
 		}
 	}
 
-	private static void validateClassType(IType classType, List<Diagnostic> diagnostics, JavaDiagnosticsContext context,
-			IProgressMonitor monitor) throws CoreException {
+	private static void validateClassType(IType classType, JavaDiagnosticsContext context, IProgressMonitor monitor)
+			throws CoreException {
 		for (IJavaElement element : classType.getChildren()) {
 			if (monitor.isCanceled()) {
 				return;
 			}
 			if (element.getElementType() == IJavaElement.FIELD) {
 				IField field = (IField) element;
-				validateField(field, diagnostics, context);
+				validateField(field, context);
 			}
 		}
 	}
 
-	private static void validateField(IField field, List<Diagnostic> diagnostics, JavaDiagnosticsContext context)
-			throws CoreException {
-		String uri = context.getUri();
+	private static void validateField(IField field, JavaDiagnosticsContext context) throws CoreException {
 		DocumentFormat documentFormat = context.getDocumentFormat();
 		boolean hasInjectAnnotation = AnnotationUtils.hasAnnotation(field, INJECT_JAVAX_ANNOTATION)
 				|| AnnotationUtils.hasAnnotation(field, INJECT_JAKARTA_ANNOTATION);
@@ -147,40 +139,35 @@ public class MicroProfileRestClientDiagnosticsParticipant implements IJavaDiagno
 				// Diagnostic 1: Field on current type has Inject and RestClient annotations but
 				// corresponding interface does not have RegisterRestClient annotation
 				Range restClientRange = PositionUtils.toNameRange(field, context.getUtils());
-				Diagnostic d = context.createDiagnostic(uri,
-						createDiagnostic1Message(field, fieldTypeName, documentFormat), restClientRange,
+				context.addDiagnostic(createDiagnostic1Message(field, fieldTypeName, documentFormat), restClientRange,
 						MicroProfileRestClientConstants.DIAGNOSTIC_SOURCE, null);
-				diagnostics.add(d);
 			}
 		} else {
 			if (hasInjectAnnotation && !hasRestClientAnnotation) {
 				// Diagnostic 3: Field on current type has Inject and not RestClient annotations
 				// but corresponding interface has RegisterRestClient annotation
 				Range restClientRange = PositionUtils.toNameRange(field, context.getUtils());
-				Diagnostic d = context.createDiagnostic(uri,
+				context.addDiagnostic(
 						"The Rest Client object should have the @RestClient annotation to be injected as a CDI bean.",
 						restClientRange, MicroProfileRestClientConstants.DIAGNOSTIC_SOURCE,
 						MicroProfileRestClientErrorCode.RestClientAnnotationMissing);
-				diagnostics.add(d);
 			} else if (!hasInjectAnnotation && hasRestClientAnnotation) {
 				// Diagnostic 4: Field on current type has RestClient and not Inject
 				// annotations but corresponding interface has RegisterRestClient annotation
 				Range restClientRange = PositionUtils.toNameRange(field, context.getUtils());
-				Diagnostic d = context.createDiagnostic(uri,
+				context.addDiagnostic(
 						"The Rest Client object should have the @Inject annotation to be injected as a CDI bean.",
 						restClientRange, MicroProfileRestClientConstants.DIAGNOSTIC_SOURCE,
 						MicroProfileRestClientErrorCode.InjectAnnotationMissing);
-				diagnostics.add(d);
 			} else if (!hasInjectAnnotation && !hasRestClientAnnotation) {
 				// Diagnostic 5: Field on current type has not RestClient and not Inject
 				// annotations
 				// but corresponding interface has RegisterRestClient annotation
 				Range restClientRange = PositionUtils.toNameRange(field, context.getUtils());
-				Diagnostic d = context.createDiagnostic(uri,
+				context.addDiagnostic(
 						"The Rest Client object should have the @Inject and @RestClient annotations to be injected as a CDI bean.",
 						restClientRange, MicroProfileRestClientConstants.DIAGNOSTIC_SOURCE,
 						MicroProfileRestClientErrorCode.InjectAndRestClientAnnotationMissing);
-				diagnostics.add(d);
 			}
 		}
 	}
@@ -206,8 +193,8 @@ public class MicroProfileRestClientDiagnosticsParticipant implements IJavaDiagno
 		return message.toString();
 	}
 
-	private static void validateInterfaceType(IType interfaceType, List<Diagnostic> diagnostics,
-			JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
+	private static void validateInterfaceType(IType interfaceType, JavaDiagnosticsContext context,
+			IProgressMonitor monitor) throws CoreException {
 		boolean hasRegisterRestClient = AnnotationUtils.hasAnnotation(interfaceType, REGISTER_REST_CLIENT_ANNOTATION);
 		if (hasRegisterRestClient) {
 			return;
@@ -238,15 +225,13 @@ public class MicroProfileRestClientDiagnosticsParticipant implements IJavaDiagno
 				}, monitor);
 
 		if (nbReferences.get() > 0) {
-			String uri = context.getUri();
 			Range restInterfaceRange = PositionUtils.toNameRange(interfaceType, context.getUtils());
-			Diagnostic d = context.createDiagnostic(uri,
+			context.addDiagnostic(
 					"The interface `" + interfaceType.getElementName()
 							+ "` does not have the @RegisterRestClient annotation. The " + nbReferences.get()
 							+ " fields references will not be injected as CDI beans.",
 					restInterfaceRange, MicroProfileRestClientConstants.DIAGNOSTIC_SOURCE,
 					MicroProfileRestClientErrorCode.RegisterRestClientAnnotationMissing);
-			diagnostics.add(d);
 		}
 	}
 

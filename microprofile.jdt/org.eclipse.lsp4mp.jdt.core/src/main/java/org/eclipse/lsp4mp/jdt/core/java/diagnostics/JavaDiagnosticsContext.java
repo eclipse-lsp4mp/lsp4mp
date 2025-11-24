@@ -59,9 +59,9 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 	private final MicroProfileProjectRuntime projectRuntime;
 
 	public JavaDiagnosticsContext(String uri, ITypeRoot typeRoot, IJDTUtils utils, DocumentFormat documentFormat,
-			MicroProfileJavaDiagnosticsSettings settings) {
+			MicroProfileJavaDiagnosticsSettings settings, List<Diagnostic> diagnostics) {
 		super(uri, typeRoot, utils);
-		this.diagnostics = new ArrayList<>();
+		this.diagnostics = diagnostics;
 		this.documentFormat = documentFormat;
 		if (settings == null) {
 			this.settings = new MicroProfileJavaDiagnosticsSettings(Collections.emptyList(), DiagnosticSeverity.Error,
@@ -98,16 +98,35 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 		return this.settings;
 	}
 
-	public Diagnostic createDiagnostic(String uri, String message, Range range, String source, IJavaErrorCode code) {
-		return createDiagnostic(uri, message, range, source, code, DiagnosticSeverity.Warning);
-	}
-
-	public Diagnostic createDiagnostic(String uri, String message, Range range, String source, IJavaErrorCode code,
+	public Diagnostic addDiagnostic(String message, String source, int offset, int length, String code,
 			DiagnosticSeverity severity) {
-		return createDiagnostic(uri, message, range, source, code != null ? code.getCode() : null, severity);
+		try {
+			IOpenable openable = getTypeRoot();
+			Range range = getUtils().toRange(openable, offset, length);
+			return addDiagnostic(message, range, source, code, severity);
+		} catch (JavaModelException e) {
+			LOGGER.log(Level.SEVERE, "Error while creating diagnostic '" + message + "'.", e);
+			return null;
+		}
 	}
 
-	public Diagnostic createDiagnostic(String uri, String message, Range range, String source, String code,
+	public Diagnostic addDiagnostic(String message, Range range, String source, IJavaErrorCode code) {
+		return addDiagnostic(message, range, source, code != null ? code.getCode() : null, DiagnosticSeverity.Warning);
+	}
+
+	private Diagnostic addDiagnostic(String message, Range range, String source, String code,
+			DiagnosticSeverity severity) {
+		Diagnostic d = createDiagnostic(message, range, source, code, severity);
+		diagnostics.add(d);
+		return d;
+	}
+
+	private Diagnostic addDiagnostic(String message, String source, ASTNode node, String code,
+			DiagnosticSeverity severity, int start, int end) {
+		return addDiagnostic(message, source, node.getStartPosition() + start, end, code, severity);
+	}
+
+	private Diagnostic createDiagnostic(String message, Range range, String source, String code,
 			DiagnosticSeverity severity) {
 		Diagnostic diagnostic = new Diagnostic();
 		diagnostic.setSource(source);
@@ -118,36 +137,6 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 			diagnostic.setCode(code);
 		}
 		return diagnostic;
-	}
-
-	public Diagnostic addDiagnostic(String message, String source, ASTNode node, IJavaErrorCode code,
-			DiagnosticSeverity severity) {
-		return addDiagnostic(message, source, node.getStartPosition(), node.getLength(), code, severity);
-	}
-
-	public Diagnostic addDiagnostic(String message, String source, int offset, int length, IJavaErrorCode code,
-			DiagnosticSeverity severity) {
-		return addDiagnostic(message, source, offset, length, code != null ? code.getCode() : null, severity);
-	}
-
-	public Diagnostic addDiagnostic(String message, String source, int offset, int length, String code,
-			DiagnosticSeverity severity) {
-		try {
-			String fileUri = getUri();
-			IOpenable openable = getTypeRoot();
-			Range range = getUtils().toRange(openable, offset, length);
-			Diagnostic d = createDiagnostic(fileUri, message, range, source, code, severity);
-			diagnostics.add(d);
-			return d;
-		} catch (JavaModelException e) {
-			LOGGER.log(Level.SEVERE, "Error while creating diagnostic '" + message + "'.", e);
-			return null;
-		}
-	}
-
-	public Diagnostic addDiagnostic(String message, String source, ASTNode node, String code,
-			DiagnosticSeverity severity, int start, int end) {
-		return addDiagnostic(message, source, node.getStartPosition() + start, end, code, severity);
 	}
 
 	public void validateWithConverter(String defValue, ITypeBinding fieldBinding, Expression defaultValueExpr) {

@@ -78,17 +78,14 @@ public class MicroProfileHealthDiagnosticsParticipant implements IJavaDiagnostic
 	}
 
 	@Override
-	public List<Diagnostic> collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor)
-			throws CoreException {
+	public void collectDiagnostics(JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
 		ITypeRoot typeRoot = context.getTypeRoot();
 		IJavaElement[] elements = typeRoot.getChildren();
-		List<Diagnostic> diagnostics = new ArrayList<>();
-		collectDiagnostics(elements, diagnostics, context, monitor);
-		return diagnostics;
+		collectDiagnostics(elements, context, monitor);
 	}
 
-	private static void collectDiagnostics(IJavaElement[] elements, List<Diagnostic> diagnostics,
-			JavaDiagnosticsContext context, IProgressMonitor monitor) throws CoreException {
+	private static void collectDiagnostics(IJavaElement[] elements, JavaDiagnosticsContext context,
+			IProgressMonitor monitor) throws CoreException {
 		for (IJavaElement element : elements) {
 			if (monitor.isCanceled()) {
 				return;
@@ -96,16 +93,15 @@ public class MicroProfileHealthDiagnosticsParticipant implements IJavaDiagnostic
 			if (element.getElementType() == IJavaElement.TYPE) {
 				IType type = (IType) element;
 				if (!type.isInterface()) {
-					validateClassType(type, diagnostics, context, monitor);
+					validateClassType(type, context, monitor);
 				}
 				continue;
 			}
 		}
 	}
 
-	private static void validateClassType(IType classType, List<Diagnostic> diagnostics, JavaDiagnosticsContext context,
-			IProgressMonitor monitor) throws CoreException {
-		String uri = context.getUri();
+	private static void validateClassType(IType classType, JavaDiagnosticsContext context, IProgressMonitor monitor)
+			throws CoreException {
 		IJDTUtils utils = context.getUtils();
 		DocumentFormat documentFormat = context.getDocumentFormat();
 		IType[] interfaces = findImplementedInterfaces(classType, monitor);
@@ -119,20 +115,16 @@ public class MicroProfileHealthDiagnosticsParticipant implements IJavaDiagnostic
 		// implemented
 		if (hasOneOfHealthAnnotation && !implementsHealthCheck) {
 			Range healthCheckInterfaceRange = PositionUtils.toNameRange(classType, utils);
-			Diagnostic d = context.createDiagnostic(uri, createDiagnostic1Message(classType, documentFormat),
-					healthCheckInterfaceRange, MicroProfileHealthConstants.DIAGNOSTIC_SOURCE,
-					MicroProfileHealthErrorCode.ImplementHealthCheck);
-			diagnostics.add(d);
+			context.addDiagnostic(createDiagnostic1Message(classType, documentFormat), healthCheckInterfaceRange,
+					MicroProfileHealthConstants.DIAGNOSTIC_SOURCE, MicroProfileHealthErrorCode.ImplementHealthCheck);
 		}
 
 		// Diagnostic 2: display HealthCheck diagnostic message if HealthCheck interface
 		// is implemented but Health/Liveness/Readiness annotation does not exist
 		if (implementsHealthCheck && !hasOneOfHealthAnnotation) {
 			Range healthCheckInterfaceRange = PositionUtils.toNameRange(classType, utils);
-			Diagnostic d = context.createDiagnostic(uri, createDiagnostic2Message(classType, documentFormat),
-					healthCheckInterfaceRange, MicroProfileHealthConstants.DIAGNOSTIC_SOURCE,
-					MicroProfileHealthErrorCode.HealthAnnotationMissing);
-			diagnostics.add(d);
+			context.addDiagnostic(createDiagnostic2Message(classType, documentFormat), healthCheckInterfaceRange,
+					MicroProfileHealthConstants.DIAGNOSTIC_SOURCE, MicroProfileHealthErrorCode.HealthAnnotationMissing);
 		}
 	}
 
