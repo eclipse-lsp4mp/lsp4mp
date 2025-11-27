@@ -108,7 +108,7 @@ public class JDTTypeUtils {
 		try {
 			String signature = field.getTypeSignature();
 			IType primaryType = field.getTypeRoot().findPrimaryType();
-			return JavaModelUtil.getResolvedTypeName(signature, primaryType);
+			return JavaModelUtil.getResolvedTypeName(signature, primaryType, '$');
 		} catch (JavaModelException e) {
 			return null;
 		}
