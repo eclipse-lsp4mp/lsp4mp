@@ -90,7 +90,7 @@ public class JDTTypeUtils {
 		try {
 			String signature = localVar.getTypeSignature().replace("/", ".");
 			IType primaryType = localVar.getTypeRoot().findPrimaryType();
-			return JavaModelUtil.getResolvedTypeName(signature, primaryType);
+			return JavaModelUtil.getResolvedTypeName(signature, primaryType, '$');
 		} catch (JavaModelException e) {
 			return null;
 		}
@@ -126,7 +126,7 @@ public class JDTTypeUtils {
 		try {
 			String signature = method.getReturnType();
 			IType primaryType = method.getTypeRoot().findPrimaryType();
-			return JavaModelUtil.getResolvedTypeName(signature, primaryType);
+			return JavaModelUtil.getResolvedTypeName(signature, primaryType, '$');
 		} catch (JavaModelException e) {
 			return null;
 		}
