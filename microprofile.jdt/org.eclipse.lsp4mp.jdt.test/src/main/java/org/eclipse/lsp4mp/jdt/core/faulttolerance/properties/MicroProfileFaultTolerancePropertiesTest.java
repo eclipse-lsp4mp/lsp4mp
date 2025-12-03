@@ -45,25 +45,22 @@ public class MicroProfileFaultTolerancePropertiesTest extends BasePropertiesMana
 		assertProperties(infoFromClasspath,
 
 				// <classname>/<annotation>/<parameter>
-				p(null, "org.acme.MyClient/Retry/maxRetries", "int", " *  **Returns:**" + System.lineSeparator() + //
-						"    " + System.lineSeparator() + //
-						"     *  The max number of retries. -1 means retry forever. The value must be greater than or equal to -1.",
+				p(null, "org.acme.MyClient/Retry/maxRetries", "int", "* **Returns:**" + System.lineSeparator() + //
+						"  * The max number of retries. -1 means retry forever. The value must be greater than or equal to -1.",
 						false, "org.acme.MyClient", null, null, 0, "3"),
 
 				// <classname>/<methodname>/<annotation>/<parameter>
 				p(null, "org.acme.MyClient/serviceA/Retry/maxRetries", "int",
-						" *  **Returns:**" + System.lineSeparator() + //
-								"    " + System.lineSeparator() + //
-								"     *  The max number of retries. -1 means retry forever. The value must be greater than or equal to -1.",
+						"* **Returns:**" + System.lineSeparator() + //
+								"  * The max number of retries. -1 means retry forever. The value must be greater than or equal to -1.",
 						false, "org.acme.MyClient", null, "serviceA()V", 0, "90"),
 
 				p(null, "org.acme.MyClient/serviceA/Retry/delay", "long",
 						"The delay between retries. Defaults to 0. The value must be greater than or equal to 0."
 								+ System.lineSeparator() + //
 								"" + System.lineSeparator() + //
-								" *  **Returns:**" + System.lineSeparator() + //
-								"    " + System.lineSeparator() + //
-								"     *  the delay time",
+								"* **Returns:**" + System.lineSeparator() + //
+								"  * the delay time",
 						false, "org.acme.MyClient", null, "serviceA()V", 0, "0"),
 
 				// <annotation>
@@ -73,12 +70,11 @@ public class MicroProfileFaultTolerancePropertiesTest extends BasePropertiesMana
 
 				// <annotation>/<parameter>
 				p(null, "Bulkhead/value", "int",
-						"Specify the maximum number of concurrent calls to an instance. The value must be greater than 0. Otherwise, org.eclipse.microprofile.faulttolerance.exceptions.FaultToleranceDefinitionException occurs."
+						"Specify the maximum number of concurrent calls to an instance. The value must be greater than 0. Otherwise, [org.eclipse.microprofile.faulttolerance.exceptions.FaultToleranceDefinitionException]() occurs."
 								+ System.lineSeparator() + //
 								"" + System.lineSeparator() + //
-								" *  **Returns:**" + System.lineSeparator() + //
-								"    " + System.lineSeparator() + //
-								"     *  the limit of the concurrent calls",
+								"* **Returns:**" + System.lineSeparator() + //
+								"  * the limit of the concurrent calls",
 						false, "org.eclipse.microprofile.faulttolerance.Bulkhead", null, "value()I", 0, "10"),
 
 				p(null, "MP_Fault_Tolerance_NonFallback_Enabled", "boolean",
