@@ -14,11 +14,14 @@
 package org.eclipse.lsp4mp.jdt.internal.core.ls;
 
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Scanner;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
@@ -131,8 +134,26 @@ public class JDTUtilsLSImpl implements IJDTUtils {
 	@Override
 	public String getJavadoc(IMember member, DocumentFormat documentFormat) throws JavaModelException {
 		boolean markdown = DocumentFormat.Markdown.equals(documentFormat);
-		return markdown ? JavadocContentAccess2.getMarkdownContent(member)
-				: JavadocContentAccess2.getPlainTextContent(member);
+		try {
+			Method getMarkdownContent = JavadocContentAccess2.class.getMethod("getMarkdownContent", IJavaElement.class);
+			Method getPlainTextContent = JavadocContentAccess2.class.getMethod("getPlainTextContent", IMember.class);
+			return markdown ? (String)getMarkdownContent.invoke(null, member) : (String)getPlainTextContent.invoke(null, member);
+		} catch (NoSuchMethodException e) {
+			try {
+				Method getMarkdownContentReader = JavadocContentAccess2.class.getMethod("getMarkdownContentReader", IJavaElement.class);
+				Method getPlainTextContentReader = JavadocContentAccess2.class.getMethod("getPlainTextContentReader", IMember.class);
+				return markdown ? toString((Reader)getMarkdownContentReader.invoke(null, member)) : toString((Reader)getPlainTextContentReader.invoke(null, member));
+			} catch (NoSuchMethodException e1) {
+				ILog.get().error("Cannot get Javadoc: cannot access method through reflection", e1);
+				return "";
+			} catch (IllegalAccessException | InvocationTargetException e1) {
+				ILog.get().error("Cannot get Javadoc: error when invoking method through reflection", e);
+				return "";
+			}
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			ILog.get().error("Cannot get Javadoc: error when invoking method through reflection", e);
+			return "";
+		}
 	}
 
 	private static String toString(Reader reader) {
