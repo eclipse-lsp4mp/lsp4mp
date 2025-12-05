@@ -4,7 +4,7 @@ Bundle-Name: %pluginName
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Bundle-SymbolicName: org.eclipse.lsp4mp.jdt.core;singleton:=true
-Bundle-Version: 0.15.0.qualifier
+Bundle-Version: 0.15.1.qualifier
 Bundle-Activator: org.eclipse.lsp4mp.jdt.core.MicroProfileCorePlugin
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.core,
