@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.eclipse.lsp4mp</groupId>
 		<artifactId>parent</artifactId>
-		<version>0.15.0-SNAPSHOT</version>
+		<version>0.15.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>org.eclipse.lsp4mp.jdt.tp</artifactId>
 	<name>lsp4mp :: Target Platform</name>
