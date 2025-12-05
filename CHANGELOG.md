@@ -1,5 +1,18 @@
 # MicroProfile Language Server Changelog
 
+## [0.15.0](https://github.com/eclipse-lsp4mp/lsp4mp/milestone/16?closed=1) (5 December, 2025)
+
+### Enhancements
+ * Validate config property values using the microprofile-config runtime used by the project. See [#511](https://github.com/eclipse-lsp4mp/lsp4mp/issues/511), [#518](https://github.com/eclipse-lsp4mp/lsp4mp/pull/518), [#517](https://github.com/eclipse-lsp4mp/lsp4mp/pull/517).
+ * Improve validation of @ConfigProperty/defaultValue for lists and arrays. See [#409](https://github.com/eclipse-lsp4mp/lsp4mp/issues/409).
+
+### Bug Fixes
+ * Recognise some mapped properties that weren't recognised before. See [#513](https://github.com/eclipse-lsp4mp/lsp4mp/pull/513).
+ * Address `IllegalArgumentException` thrown in JavaCursorContextKind. See [#502](https://github.com/eclipse-lsp4mp/lsp4mp/pull/502).
+ * Properly validate property values for properties of type `jakarta.inject.Provider`. See [#459](https://github.com/eclipse-lsp4mp/lsp4mp/issues/459).
+ * Use '$' instead of '.' internally for fully qualified naming for classes. See [#521](https://github.com/eclipse-lsp4mp/lsp4mp/pull/521).
+ * Use '$' instead of '.' internally for fully qualified naming for methods. See [#522](https://github.com/eclipse-lsp4mp/lsp4mp/pull/522).
+
 ## [0.14.0](https://github.com/eclipse-lsp4mp/lsp4mp/milestone/15?closed=1) (22 April, 2025)
 
 ### Performance
