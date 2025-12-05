@@ -29,7 +29,7 @@
     <connection>scm:git:git@github.com:eclipse/lsp4mp.git</connection>
     <developerConnection>scm:git:git@github.com:eclipse/lsp4mp.git</developerConnection>
     <url>https://github.com/eclipse/lsp4mp</url>
-    <tag>${project.version}</tag>
+    <tag>0.15.0</tag>
   </scm>
   <build>
     <plugins>
