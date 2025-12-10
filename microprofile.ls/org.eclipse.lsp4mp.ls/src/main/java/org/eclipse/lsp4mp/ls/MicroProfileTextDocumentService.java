@@ -51,6 +51,7 @@ import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4mp.commons.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionResolveData;
@@ -64,7 +65,7 @@ import org.eclipse.lsp4mp.services.properties.CompletionData;
 import org.eclipse.lsp4mp.settings.MicroProfileCodeLensSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
+import org.eclipse.lsp4mp.settings.MicroProfileGeneralClientSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileSymbolSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
@@ -75,12 +76,15 @@ import org.eclipse.lsp4mp.settings.SharedSettings;
  */
 public class MicroProfileTextDocumentService implements TextDocumentService {
 
+	private final MicroProfileLanguageServer microprofileLanguageServer;
 	private final Map<String, TextDocumentService> textDocumentServicesMap;
 	private final PropertiesFileTextDocumentService propertiesTextDocumentService;
 	private final JavaFileTextDocumentService javaTextDocumentService;
 	private final SharedSettings sharedSettings;
 
-	public MicroProfileTextDocumentService(MicroProfileLanguageServer microprofileLanguageServer, SharedSettings sharedSettings, JavaTextDocuments javaTextDocuments) {
+	public MicroProfileTextDocumentService(MicroProfileLanguageServer microprofileLanguageServer,
+			SharedSettings sharedSettings, JavaTextDocuments javaTextDocuments) {
+		this.microprofileLanguageServer = microprofileLanguageServer;
 		textDocumentServicesMap = new HashMap<>();
 		this.sharedSettings = sharedSettings;
 		propertiesTextDocumentService = new PropertiesFileTextDocumentService(microprofileLanguageServer,
@@ -268,30 +272,67 @@ public class MicroProfileTextDocumentService implements TextDocumentService {
 		javaTextDocumentService.propertiesChanged(event);
 	}
 
-	public void updateSymbolSettings(MicroProfileSymbolSettings newSettings) {
+	public void updateClientSettings(MicroProfileGeneralClientSettings clientSettings) {
+		MicroProfileSymbolSettings newSymbols = clientSettings.getSymbols();
+		if (newSymbols != null) {
+			updateSymbolSettings(newSymbols);
+		}
+		MicroProfileFormattingSettings newFormatting = clientSettings.getFormatting();
+		if (newFormatting != null) {
+			updateFormattingSettings(newFormatting);
+		}
+
+		boolean executionSettingsChanged = updateExecutionSettings(clientSettings.getExecution());
+		boolean validationSettingsChanged = updateValidationSettings(clientSettings.getValidation());
+		boolean codeLensSettingsChanged = updateCodeLensSettings(clientSettings.getCodeLens());
+		boolean inlayHintSettingsChanged = updateInlayHintSettings(clientSettings.getInlayHint());
+
+		if (validationSettingsChanged || executionSettingsChanged) {
+			propertiesTextDocumentService.triggerValidationAll();
+			javaTextDocumentService.triggerValidationAll();
+		}
+
+		if (codeLensSettingsChanged) {
+			// Codelens settings has changed, refresh codelens of all opened editors
+			if (microprofileLanguageServer.getCapabilityManager().getClientCapabilities()
+					.isCodeLensesRefreshSupported()) {
+				microprofileLanguageServer.getLanguageClient().refreshCodeLenses();
+			}
+		}
+
+		if (inlayHintSettingsChanged || executionSettingsChanged) {
+			// Inlay hint settings has changed, refresh inlay hints of all opened editors
+			if (microprofileLanguageServer.getCapabilityManager().getClientCapabilities()
+					.isInlayHintsRefreshSupported()) {
+				microprofileLanguageServer.getLanguageClient().refreshInlayHints();
+			}
+		}
+
+	}
+
+	private void updateSymbolSettings(MicroProfileSymbolSettings newSettings) {
 		propertiesTextDocumentService.updateSymbolSettings(newSettings);
 	}
 
-	public void updateExecutionSettings(MicroProfileExecutionSettings newValidation) {
-		propertiesTextDocumentService.updateExecutionSettings(newValidation);
-		javaTextDocumentService.updateExecutionSettings(newValidation);
-	}
-	
-	public void updateValidationSettings(MicroProfileValidationSettings newValidation) {
-		propertiesTextDocumentService.updateValidationSettings(newValidation);
-		javaTextDocumentService.updateValidationSettings(newValidation);
-	}
-
-	public void updateFormattingSettings(MicroProfileFormattingSettings newFormatting) {
+	private void updateFormattingSettings(MicroProfileFormattingSettings newFormatting) {
 		propertiesTextDocumentService.updateFormattingSettings(newFormatting);
 	}
 
-	public void updateCodeLensSettings(MicroProfileCodeLensSettings newCodeLens) {
-		javaTextDocumentService.updateCodeLensSettings(newCodeLens);
+	private boolean updateExecutionSettings(MicroProfileExecutionSettings newExecution) {
+		return sharedSettings.getExecutionSettings().update(newExecution);
 	}
 
-	public void updateInlayHintSettings(MicroProfileInlayHintSettings newInlayHint) {
-		propertiesTextDocumentService.updateInlayHintSettings(newInlayHint);
+	private boolean updateValidationSettings(MicroProfileValidationSettings newValidation) {
+		return sharedSettings.getValidationSettings().update(newValidation);
+	}
+
+	private boolean updateCodeLensSettings(MicroProfileCodeLensSettings newCodeLens) {
+		return sharedSettings.getCodeLensSettings().update(newCodeLens);
+	}
+
+	private boolean updateInlayHintSettings(MicroProfileInlayHintSettings newInlayHint) {
+		// Update inlay hint settings
+		return sharedSettings.getInlayHintSettings().update(newInlayHint);
 	}
 
 	private TextDocumentService getTextDocumentService(TextDocumentIdentifier document) {

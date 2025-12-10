@@ -13,6 +13,8 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.settings;
 
+import java.util.Objects;
+
 /**
  * MicroProfile code lens settings.
  *
@@ -29,6 +31,31 @@ public class MicroProfileCodeLensSettings {
 
 	public void setUrlCodeLensEnabled(boolean urlCodeLensEnabled) {
 		this.urlCodeLensEnabled = urlCodeLensEnabled;
+	}
+
+	public boolean update(MicroProfileCodeLensSettings newCodeLens) {
+		if (newCodeLens == null || Objects.equals(this, newCodeLens)) {
+			return false;
+		}
+		this.setUrlCodeLensEnabled(newCodeLens.isUrlCodeLensEnabled());
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(urlCodeLensEnabled);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MicroProfileCodeLensSettings other = (MicroProfileCodeLensSettings) obj;
+		return urlCodeLensEnabled == other.urlCodeLensEnabled;
 	}
 
 }

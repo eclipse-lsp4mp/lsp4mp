@@ -15,6 +15,7 @@ import static org.eclipse.lsp4mp.services.properties.PropertiesFileAssert.testIn
 
 import java.util.Collections;
 
+import org.eclipse.lsp4mp.commons.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.junit.Test;
 
@@ -40,13 +41,13 @@ public class PropertiesFileExpressionInlayHintTest {
 		MicroProfileProjectInfo projectInfo = new MicroProfileProjectInfo();
 		projectInfo.setProperties(Collections.emptyList());
 		testInlayHintFor(value, //
-				null, //
+				new MicroProfileInlayHintSettings(), //
 				projectInfo, ih(p(0, 51), " https://microprofile.io:8080/project/eclipse/microprofile-config"), //
 				ih(p(4, 26), " project/eclipse/microprofile-config"));
 
 		// test with project null
 		testInlayHintFor(value, //
-				null, //
+				new MicroProfileInlayHintSettings(), //
 				(MicroProfileProjectInfo) null, //
 				ih(p(0, 51), " https://microprofile.io:8080/project/eclipse/microprofile-config"), //
 				ih(p(4, 26), " project/eclipse/microprofile-config"));

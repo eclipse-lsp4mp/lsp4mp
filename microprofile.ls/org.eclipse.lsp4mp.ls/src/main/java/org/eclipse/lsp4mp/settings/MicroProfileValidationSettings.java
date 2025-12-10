@@ -13,6 +13,8 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.settings;
 
+import com.google.common.base.Objects;
+
 /**
  * MicroProfile validation settings.
  *
@@ -206,7 +208,7 @@ public class MicroProfileValidationSettings {
 	 */
 	public void setUnassigned(MicroProfileValidationTypeSettings unassigned) {
 		this.unassigned = unassigned;
-		this.updated = true;
+		this.updated = false;
 	}
 
 	/**
@@ -231,7 +233,10 @@ public class MicroProfileValidationSettings {
 	 *
 	 * @param newValidation the new validation settings.
 	 */
-	public void update(MicroProfileValidationSettings newValidation) {
+	public boolean update(MicroProfileValidationSettings newValidation) {
+		if (newValidation == null || Objects.equal(this, newValidation)) {
+			return false;
+		}
 		this.setEnabled(newValidation.isEnabled());
 		this.setSyntax(newValidation.getSyntax());
 		this.setUnknown(newValidation.getUnknown());
@@ -240,5 +245,28 @@ public class MicroProfileValidationSettings {
 		this.setValue(newValidation.getValue());
 		this.setExpression(newValidation.getExpression());
 		this.setUnassigned(newValidation.getUnassigned());
+		return true;
 	}
+
+	@Override
+	public int hashCode() {
+		return java.util.Objects.hash(duplicate, enabled, expression, required, syntax, unassigned, unknown, value);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MicroProfileValidationSettings other = (MicroProfileValidationSettings) obj;
+		return java.util.Objects.equals(duplicate, other.duplicate) && enabled == other.enabled
+				&& java.util.Objects.equals(expression, other.expression)
+				&& java.util.Objects.equals(required, other.required) && java.util.Objects.equals(syntax, other.syntax)
+				&& java.util.Objects.equals(unassigned, other.unassigned)
+				&& java.util.Objects.equals(unknown, other.unknown) && java.util.Objects.equals(value, other.value);
+	}
+
 }

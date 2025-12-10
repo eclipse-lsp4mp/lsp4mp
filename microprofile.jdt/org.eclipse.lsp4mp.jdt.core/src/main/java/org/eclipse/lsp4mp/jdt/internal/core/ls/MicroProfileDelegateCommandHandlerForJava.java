@@ -34,6 +34,7 @@ import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.InlayHint;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
@@ -43,6 +44,7 @@ import org.eclipse.lsp4mp.commons.DocumentFormat;
 import org.eclipse.lsp4mp.commons.JavaCursorContextResult;
 import org.eclipse.lsp4mp.commons.JavaFileInfo;
 import org.eclipse.lsp4mp.commons.MicroProfileDefinition;
+import org.eclipse.lsp4mp.commons.MicroProfileInlayHintTypeSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaCodeActionParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaCodeLensParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaCompletionParams;
@@ -52,6 +54,8 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaFileInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintSettings;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionResolveData;
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.utils.JSONUtility;
@@ -69,6 +73,8 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 	private static final String JAVA_CODEACTION_COMMAND_ID = "microprofile/java/codeAction";
 	private static final String JAVA_CODEACTION_RESOLVE_COMMAND_ID = "microprofile/java/codeActionResolve";
 	private static final String JAVA_CODELENS_COMMAND_ID = "microprofile/java/codeLens";
+	private static final String JAVA_INLAY_HINT_COMMAND_ID = "microprofile/java/inlayHint";
+
 	private static final String JAVA_COMPLETION_COMMAND_ID = "microprofile/java/completion";
 	private static final String JAVA_DEFINITION_COMMAND_ID = "microprofile/java/definition";
 	private static final String JAVA_DIAGNOSTICS_COMMAND_ID = "microprofile/java/diagnostics";
@@ -89,6 +95,8 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 			return resolveCodeActionForJava(arguments, commandId, progress);
 		case JAVA_CODELENS_COMMAND_ID:
 			return getCodeLensForJava(arguments, commandId, progress);
+		case JAVA_INLAY_HINT_COMMAND_ID:
+			return getInlayHintForJava(arguments, commandId, progress);
 		case JAVA_COMPLETION_COMMAND_ID:
 			return getCompletionForJava(arguments, commandId, progress);
 		case JAVA_DEFINITION_COMMAND_ID:
@@ -276,6 +284,68 @@ public class MicroProfileDelegateCommandHandlerForJava extends AbstractMicroProf
 		params.setOpenURICommand(getString(obj, "openURICommand"));
 		params.setLocalServerPort(getInt(obj, "localServerPort"));
 		return params;
+	}
+
+	/**
+	 * Returns the inlay hints for the given Java file.
+	 *
+	 * @param arguments
+	 * @param commandId
+	 * @param monitor
+	 * @return the inlay hints for the given Java file.
+	 * @throws CoreException
+	 * @throws JavaModelException
+	 */
+	private static List<InlayHint> getInlayHintForJava(List<Object> arguments, String commandId,
+			IProgressMonitor monitor) throws JavaModelException, CoreException {
+		// Create java inlay hints parameter
+		MicroProfileJavaInlayHintParams params = createMicroProfileJavaInlayHintParams(arguments, commandId);
+		// Return inlay hints from the given parameter
+		return PropertiesManagerForJava.getInstance().inlayHint(params, JDTUtilsLSImpl.getInstance(), monitor);
+	}
+
+	/**
+	 * Create java inlay hint parameter from the given arguments map.
+	 *
+	 * @param arguments
+	 * @param commandId
+	 *
+	 * @return java inlay hint parameter
+	 */
+	private static MicroProfileJavaInlayHintParams createMicroProfileJavaInlayHintParams(List<Object> arguments,
+			String commandId) {
+		Map<String, Object> obj = getFirst(arguments);
+		if (obj == null) {
+			throw new UnsupportedOperationException(String.format(
+					"Command '%s' must be called with one MicroProfileJavaInlayHintParams argument!", commandId));
+		}
+		String javaFileUri = getString(obj, "uri");
+		if (javaFileUri == null) {
+			throw new UnsupportedOperationException(String.format(
+					"Command '%s' must be called with required MicroProfileJavaInlayHintParams.uri (java URI)!",
+					commandId));
+		}
+		MicroProfileJavaInlayHintSettings settings = null;
+		Map<String, Object> settingsObj = getObject(obj, "settings");
+		if (settingsObj != null) {
+			int executionMode = getInt(settingsObj, "mode");
+			settings = new MicroProfileJavaInlayHintSettings(ExecutionMode.forValue(executionMode));
+			settings.setConverters(createInlayHintTypeSettings("converters", settingsObj));
+			settings.setDefaultValues(createInlayHintTypeSettings("defaultValues", settingsObj));
+		}
+		return new MicroProfileJavaInlayHintParams(javaFileUri, settings);
+	}
+
+	private static MicroProfileInlayHintTypeSettings createInlayHintTypeSettings(String fieldName,
+			Map<String, Object> settingsObj) {
+		Map<String, Object> obj = (Map<String, Object>) settingsObj.get(fieldName);
+		if (obj == null) {
+			return null;
+		}
+		boolean enabled = getBoolean(obj, "enabled");
+		MicroProfileInlayHintTypeSettings settings = new MicroProfileInlayHintTypeSettings();
+		settings.setEnabled(enabled);
+		return settings;
 	}
 
 	/**

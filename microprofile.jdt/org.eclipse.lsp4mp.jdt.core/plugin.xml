@@ -17,6 +17,9 @@
    <extension-point id="javaASTValidators"
                     name="%javaASTValidators.name"
                     schema="schema/javaASTValidators.exsd"/>
+   <extension-point id="javaASTInlayHints"
+                    name="%javaASTInlayHints.name"
+                    schema="schema/javaASTInlayHints.exsd"/>                    
    <extension-point id="staticPropertyProviders"
                     name="%staticPropertyProviders.name"
                     schema="schema/staticPropertyProviders.exsd"/>
@@ -37,6 +40,7 @@
             <command id="microprofile/java/codeAction"/>
             <command id="microprofile/java/codeActionResolve"/>
             <command id="microprofile/java/codeLens"/>
+            <command id="microprofile/java/inlayHint"/>
             <command id="microprofile/java/completion"/>
             <command id="microprofile/java/definition"/>
             <command id="microprofile/java/diagnostics"/>
@@ -67,6 +71,8 @@
    <extension point="org.eclipse.lsp4mp.jdt.core.javaFeatureParticipants" >
       <!-- Diagnostics managed with Java AST vistor -->
    	  <diagnostics class="org.eclipse.lsp4mp.jdt.internal.core.java.validators.JavaASTDiagnosticsParticipant" />
+   	  <!-- Inlay hints managed with Java AST vistor -->
+   	  <inlayHint class="org.eclipse.lsp4mp.jdt.internal.core.java.inlayhint.JavaASTInlayHintsParticipant" />
    </extension>
 
    <!-- Java Util Logging Config support -->
@@ -106,6 +112,11 @@
    <extension point="org.eclipse.lsp4mp.jdt.core.javaASTValidators">
       <!-- Java validation for the MicroProfile @ConfigProperty annotation -->
       <validator class="org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigASTValidator" />
+   </extension>
+
+   <extension point="org.eclipse.lsp4mp.jdt.core.javaASTInlayHints">
+      <!-- Show converters, default values as inlay hint for @ConfigProperty annotation -->
+      <inlayHint class="org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigASTInlayHint" />
    </extension>
 
    <!-- Microprofile Config Static Property support -->

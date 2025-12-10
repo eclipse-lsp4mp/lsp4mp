@@ -66,6 +66,7 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.json.adapters.EnumTypeAdapter;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4mp.commons.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertyDocumentationParams;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionData;
@@ -89,7 +90,6 @@ import org.eclipse.lsp4mp.settings.MicroProfileCompletionCapabilities;
 import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileHoverSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
 import org.eclipse.lsp4mp.snippets.LanguageId;
@@ -928,7 +928,7 @@ public class PropertiesFileAssert {
 	// ------------------- InlayHint assert
 
 	public static void testInlayHintFor(String value, InlayHint... expected) throws Exception {
-		testInlayHintFor(value, null, expected);
+		testInlayHintFor(value, new MicroProfileInlayHintSettings(), expected);
 	}
 
 	public static void testInlayHintFor(String value, MicroProfileInlayHintSettings inlayHintSettings,
@@ -938,11 +938,16 @@ public class PropertiesFileAssert {
 
 	public static void testInlayHintFor(String value, MicroProfileInlayHintSettings inlayHintSettings,
 			MicroProfileProjectInfo projectInfo, InlayHint... expected) throws Exception {
+
+		MicroProfileExecutionSettings executionSettings = new MicroProfileExecutionSettings();
+		executionSettings.setMode(ExecutionMode.FULL.name());
+
 		PropertiesModel model = parse(value, null);
 		Range range = null;
 		PropertiesFileLanguageService languageService = new PropertiesFileLanguageService();
-		List<InlayHint> actual = languageService.getInlayHint(model, projectInfo, range, () -> {
-		});
+		List<InlayHint> actual = languageService.getInlayHint(model, projectInfo, range, inlayHintSettings,
+				executionSettings, () -> {
+				});
 		assertInlayHint(actual, expected);
 	}
 

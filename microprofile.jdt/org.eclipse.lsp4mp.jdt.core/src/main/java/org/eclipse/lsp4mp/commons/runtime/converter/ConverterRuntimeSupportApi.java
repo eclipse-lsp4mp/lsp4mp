@@ -93,12 +93,21 @@ public interface ConverterRuntimeSupportApi extends MicroProfileRuntimeSupport {
 	 * </li>
 	 * </ul>
 	 *
-	 * @param value          the raw configuration value to validate
-	 * @param type           the fully-qualified type name expected
-	 * @param enumConstNames
-	 * @param collector      the diagnostics collector used to report validation
-	 *                       errors
+	 * @param value                  the raw configuration value to validate
+	 * @param type                   the fully-qualified type name expected
+	 * @param enumConstNamesProvider the enum constant names provider.
+	 * @param collector              the diagnostics collector used to report
+	 *                               validation errors
 	 */
 	void validate(String value, String type, EnumConstantsProvider enumConstNamesProvider,
 			DiagnosticsCollector collector);
+
+	/**
+	 * Returns the converter validator for the given type and null otherwise.
+	 * 
+	 * @param type                   the Java type name.
+	 * @param enumConstNamesProvider the enum constant names provider.
+	 * @return
+	 */
+	ConverterValidator findConverter(String type, EnumConstantsProvider enumConstNamesProvider);
 }

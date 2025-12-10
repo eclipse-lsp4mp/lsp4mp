@@ -49,10 +49,11 @@ public interface ConverterValidator {
 		validate(value, 0, collector);
 	}
 
-	default void refreshEnumType(EnumConstantsProvider enumConstNamesProvider, TypeProvider typeProvider, ExecutionMode executionMode) {
+	default void refreshEnumType(EnumConstantsProvider enumConstNamesProvider, TypeProvider typeProvider,
+			ExecutionMode executionMode) {
 		// Do nothing
 	}
-	
+
 	/**
 	 * Indicates whether this validator is ready to perform validation.
 	 *
@@ -60,4 +61,19 @@ public interface ConverterValidator {
 	 *         otherwise
 	 */
 	boolean canValidate();
+
+	/**
+	 * Returns the converter full qualified class name and null otherwise.
+	 * 
+	 * @return the converter full qualified class name and null otherwise.
+	 */
+	String getConverterClassName();
+
+	/**
+	 * Returns the converter simple class name.
+	 * 
+	 * @return the converter simple class name.
+	 */
+	String getConverterSimpleClassName();
+
 }

@@ -34,6 +34,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4mp.commons.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.extensions.ExtendedMicroProfileProjectInfo;
 import org.eclipse.lsp4mp.ls.api.MicroProfilePropertyDefinitionProvider;
@@ -275,8 +276,10 @@ public class PropertiesFileLanguageService extends PropertiesFileExtensionRegist
 	}
 
 	public List<InlayHint> getInlayHint(PropertiesModel document, MicroProfileProjectInfo projectInfo, Range range,
+			MicroProfileInlayHintSettings inlayHintSettings, MicroProfileExecutionSettings executionSettings,
 			CancelChecker cancelChecker) {
-		return inlayHint.getInlayHint(document, projectInfo, range, cancelChecker);
+		return inlayHint.getInlayHint(document, projectInfo, range, inlayHintSettings, executionSettings,
+				cancelChecker);
 	}
 
 }
