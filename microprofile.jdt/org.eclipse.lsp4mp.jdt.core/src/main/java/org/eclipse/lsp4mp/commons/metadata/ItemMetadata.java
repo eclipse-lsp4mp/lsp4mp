@@ -13,6 +13,7 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.commons.metadata;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,6 +50,9 @@ public class ItemMetadata extends ItemBase {
 
 	private String type;
 
+	// Cache for getSimpleType() to avoid recomputation
+	private transient String simpleType;
+
 	private String sourceField;
 
 	private String sourceMethod;
@@ -69,6 +73,8 @@ public class ItemMetadata extends ItemBase {
 
 	public void setType(String type) {
 		this.type = type;
+		// Invalidate the cache whenever the type changes
+		this.simpleType = null;
 	}
 
 	public String getSourceField() {
@@ -233,6 +239,78 @@ public class ItemMetadata extends ItemBase {
 			return name.split("\\.");
 		}
 		return null;
+	}
+
+	/**
+	 * Returns a readable representation of the type, including generics. Examples:
+	 * - "java.lang.String" -> "String" - "java.util.List<java.lang.String>" ->
+	 * "List<String>" - "java.util.Map<java.lang.String,
+	 * java.util.List<java.lang.Integer>>" -> "Map<String, List<Integer>>"
+	 * 
+	 * Uses a recursive parser and caches the result in simpleTypeCache.
+	 */
+	public String getSimpleType() {
+		if (simpleType != null) {
+			return simpleType;
+		}
+		if (type == null) {
+			return null;
+		}
+		simpleType = parseSimpleType(type, new IndexWrapper());
+		return simpleType;
+	}
+
+	// Helper class to pass the current parsing index by reference
+	private static class IndexWrapper {
+		int index = 0;
+	}
+
+	// Recursive parser for generic types
+	private static String parseSimpleType(String input, IndexWrapper idx) {
+		StringBuilder raw = new StringBuilder();
+		while (idx.index < input.length()) {
+			char c = input.charAt(idx.index);
+			if (c == '<' || c == ',' || c == '>')
+				break;
+			raw.append(c);
+			idx.index++;
+		}
+
+		// Extract simple class name without package
+		String typeName = simpleName(raw.toString().trim());
+
+		// If there are generic parameters
+		if (idx.index < input.length() && input.charAt(idx.index) == '<') {
+			idx.index++; // skip '<'
+			List<String> params = new ArrayList<>();
+			while (true) {
+				params.add(parseSimpleType(input, idx));
+				if (idx.index >= input.length())
+					break;
+				char sep = input.charAt(idx.index);
+				idx.index++; // skip ',' or '>'
+				if (sep == '>')
+					break;
+			}
+
+			// Reconstruct the full generic type
+			StringBuilder sb = new StringBuilder(typeName + "<");
+			for (int i = 0; i < params.size(); i++) {
+				if (i > 0)
+					sb.append(", ");
+				sb.append(params.get(i));
+			}
+			sb.append(">");
+			return sb.toString();
+		}
+
+		return typeName;
+	}
+
+	// Utility to get the class name without the package
+	private static String simpleName(String fullName) {
+		int lastDot = fullName.lastIndexOf('.');
+		return lastDot != -1 ? fullName.substring(lastDot + 1) : fullName;
 	}
 
 	@Override

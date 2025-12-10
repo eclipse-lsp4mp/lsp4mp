@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import org.eclipse.lsp4mp.commons.runtime.TypeSignatureParser.EmulateType;
 import org.eclipse.lsp4mp.commons.runtime.TypeSignatureParser.EnumType;
 import org.eclipse.lsp4mp.commons.runtime.converter.ConverterRuntimeSupportApi;
+import org.eclipse.lsp4mp.commons.runtime.converter.ConverterValidator;
 import org.eclipse.lsp4mp.commons.runtime.converter.full.FullConverterRuntimeSupport;
 import org.eclipse.lsp4mp.commons.runtime.converter.safe.SafeConverterRuntimeSupport;
 
@@ -86,12 +87,23 @@ public class MicroProfileProjectRuntime implements TypeProvider {
 
 	public void validateValue(String value, String type, EnumConstantsProvider enumConstNamesProvider,
 			ExecutionMode preferredMode, DiagnosticsCollector collector) {
+		ConverterRuntimeSupportApi converterRuntimeSupport = getConvertRuntimeSupport(preferredMode);
+		converterRuntimeSupport.validate(value, type, enumConstNamesProvider, collector);
+	}
+
+	private ConverterRuntimeSupportApi getConvertRuntimeSupport(ExecutionMode preferredMode) {
 		ConverterRuntimeSupportApi converterRuntimeSupport = getRuntimeSupport(ConverterRuntimeSupportApi.class,
 				preferredMode);
 		if (!converterRuntimeSupport.hasConfigProviderResolver()) {
 			converterRuntimeSupport = getRuntimeSupport(ConverterRuntimeSupportApi.class, ExecutionMode.SAFE);
 		}
-		converterRuntimeSupport.validate(value, type, enumConstNamesProvider, collector);
+		return converterRuntimeSupport;
+	}
+
+	public ConverterValidator findConverterValidator(String type, EnumConstantsProvider enumConstNamesProvider,
+			ExecutionMode preferredMode) {
+		ConverterRuntimeSupportApi converterRuntimeSupport = getConvertRuntimeSupport(preferredMode);
+		return converterRuntimeSupport.findConverter(type, enumConstNamesProvider);
 	}
 
 	/**

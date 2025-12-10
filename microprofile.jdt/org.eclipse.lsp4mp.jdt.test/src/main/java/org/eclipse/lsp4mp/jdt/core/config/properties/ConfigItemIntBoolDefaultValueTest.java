@@ -38,7 +38,7 @@ public class ConfigItemIntBoolDefaultValueTest extends BasePropertiesManagerTest
 				MicroProfileMavenProjectName.config_quickstart, MicroProfilePropertiesScope.SOURCES_AND_DEPENDENCIES);
 
 		assertProperties(infoFromClasspath,
-				39 /* properties from Java sources with ConfigProperty */ + //
+				40 /* properties from Java sources with ConfigProperty */ + //
 				7 /* static properties from microprofile-context-propagation-api */ + //
 				1 /* static property from microprofile config_ordinal */,
 

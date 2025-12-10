@@ -36,7 +36,7 @@ public class MicroProfileConfigPropertyTest extends BasePropertiesManagerTest {
 		MicroProfileProjectInfo infoFromClasspath = getMicroProfileProjectInfoFromMavenProject(
 				MicroProfileMavenProjectName.config_quickstart, MicroProfilePropertiesScope.SOURCES_AND_DEPENDENCIES);
 
-		assertProperties(infoFromClasspath, 39 /* properties from Java sources with ConfigProperty */ + //
+		assertProperties(infoFromClasspath, 40 /* properties from Java sources with ConfigProperty */ + //
 				7 /* static properties from microprofile-context-propagation-api */ + //
 				1 /* static property from microprofile config_ordinal */,
 
@@ -55,6 +55,12 @@ public class MicroProfileConfigPropertyTest extends BasePropertiesManagerTest {
 				// Optional<String> name;
 				p(null, "greeting.name", "java.util.Optional", null, false, "org.acme.config.GreetingResource", "name",
 						null, 0, null),
+
+				// GreetingResource
+				// @ConfigProperty(name = "greeting.defaultValue")
+				// Duration defaultValue;
+				p(null, "greeting.defaultValue", "java.time.Duration", null, false, "org.acme.config.GreetingResource",
+						"defaultValue", null, 0, null),
 
 				// GreetingConstructorResource(
 				// @ConfigProperty(name = "greeting.constructor.message") String message,
@@ -95,7 +101,7 @@ public class MicroProfileConfigPropertyTest extends BasePropertiesManagerTest {
 		MicroProfileProjectInfo infoFromJavaSources = getMicroProfileProjectInfoFromMavenProject(
 				MicroProfileMavenProjectName.config_quickstart, MicroProfilePropertiesScope.ONLY_SOURCES);
 
-		assertProperties(infoFromJavaSources, 39 /* properties from Java sources with ConfigProperty */,
+		assertProperties(infoFromJavaSources, 40 /* properties from Java sources with ConfigProperty */,
 
 				// GreetingResource
 				// @ConfigProperty(name = "greeting.message")
@@ -112,6 +118,12 @@ public class MicroProfileConfigPropertyTest extends BasePropertiesManagerTest {
 				// Optional<String> name;
 				p(null, "greeting.name", "java.util.Optional", null, false, "org.acme.config.GreetingResource", "name",
 						null, 0, null),
+
+				// GreetingResource
+				// @ConfigProperty(name = "greeting.defaultValue")
+				// Duration defaultValue;
+				p(null, "greeting.defaultValue", "java.time.Duration", null, false, "org.acme.config.GreetingResource",
+						"defaultValue", null, 0, null),
 
 				// GreetingConstructorResource(
 				// @ConfigProperty(name = "greeting.constructor.message") String message,

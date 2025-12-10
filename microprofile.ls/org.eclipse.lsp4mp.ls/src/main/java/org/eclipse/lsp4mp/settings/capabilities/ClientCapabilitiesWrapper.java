@@ -79,7 +79,7 @@ public class ClientCapabilitiesWrapper {
 	public boolean isRangeFormattingDynamicRegistered() {
 		return v3Supported && isDynamicRegistrationSupported(getTextDocument().getRangeFormatting());
 	}
-	
+
 	public boolean isWorkspaceSymbolDynamicRegistered() {
 		return v3Supported && isDynamicRegistrationSupported(getWorkspace().getSymbol());
 	}
@@ -96,7 +96,7 @@ public class ClientCapabilitiesWrapper {
 	public TextDocumentClientCapabilities getTextDocument() {
 		return this.capabilities.getTextDocument();
 	}
-	
+
 	public WorkspaceClientCapabilities getWorkspace() {
 		return this.capabilities.getWorkspace();
 	}
@@ -150,4 +150,15 @@ public class ClientCapabilitiesWrapper {
 				&& capabilities.getTextDocument().getCodeAction().getResolveSupport().getProperties().contains("edit");
 	}
 
+	public boolean isCodeLensesRefreshSupported() {
+		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getInlayHint() != null
+				&& capabilities.getWorkspace().getCodeLens().getRefreshSupport() != null
+				&& capabilities.getWorkspace().getCodeLens().getRefreshSupport().booleanValue();
+	}
+	
+	public boolean isInlayHintsRefreshSupported() {
+		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getInlayHint() != null
+				&& capabilities.getWorkspace().getInlayHint().getRefreshSupport() != null
+				&& capabilities.getWorkspace().getInlayHint().getRefreshSupport().booleanValue();
+	}
 }

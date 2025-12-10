@@ -144,8 +144,7 @@ public class MicroProfileCapabilityManager {
 					new DocumentHighlightRegistrationOptions(), MicroProfileLanguageIds.MICROPROFILE_PROPERTIES);
 		}
 		if (this.getClientCapabilities().isInlayHintDynamicRegistered()) {
-			registerCapability(INLAY_HINT_ID, TEXT_DOCUMENT_INLAY_HINT, new InlayHintRegistrationOptions(),
-					MicroProfileLanguageIds.MICROPROFILE_PROPERTIES);
+			registerCapability(INLAY_HINT_ID, TEXT_DOCUMENT_INLAY_HINT, new InlayHintRegistrationOptions());
 		}
 		if (this.getClientCapabilities().isWorkspaceSymbolDynamicRegistered()) {
 			registerCapability(WORKSPACE_SYMBOL_ID, WORKSPACE_SYMBOLS, DEFAULT_WORKSPACE_SYMBOL_OPTIONS);

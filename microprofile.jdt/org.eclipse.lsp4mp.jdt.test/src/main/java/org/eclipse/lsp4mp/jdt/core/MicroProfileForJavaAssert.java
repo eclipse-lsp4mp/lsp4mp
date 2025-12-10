@@ -35,6 +35,8 @@ import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.InlayHint;
+import org.eclipse.lsp4j.InlayHintLabelPart;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupContent;
@@ -57,6 +59,7 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaCompletionParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDefinitionParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintParams;
 import org.eclipse.lsp4mp.commons.codeaction.CodeActionData;
 import org.eclipse.lsp4mp.commons.codeaction.MicroProfileCodeActionId;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.IJavaErrorCode;
@@ -122,7 +125,8 @@ public class MicroProfileForJavaAssert {
 		for (int i = 0; i < expected.length; i++) {
 			Assert.assertEquals("Assert title [" + i + "]", expected[i].getTitle(), actual.get(i).getTitle());
 			Assert.assertEquals("Assert edit [" + i + "]", expected[i].getEdit(), actual.get(i).getEdit());
-			Assert.assertEquals("Assert id [" + i + "]", ((CodeActionData)(expected[i].getData())).getCodeActionId(), ((CodeActionData)(actual.get(i).getData())).getCodeActionId());
+			Assert.assertEquals("Assert id [" + i + "]", ((CodeActionData) (expected[i].getData())).getCodeActionId(),
+					((CodeActionData) (actual.get(i).getData())).getCodeActionId());
 		}
 	}
 
@@ -427,6 +431,52 @@ public class MicroProfileForJavaAssert {
 		CodeLens codeLens = new CodeLens(range);
 		codeLens.setCommand(new Command(title, commandId, Collections.singletonList(title)));
 		return codeLens;
+	}
+
+	// ------------------- InlayHint assert
+
+	/**
+	 * Asserts that the expected inlay hints are in the document specified by the
+	 * params.
+	 *
+	 * @param params   the parameters specifying the document to get the inlay hints
+	 *                 for
+	 * @param utils    the jdt utils
+	 * @param expected the list of expected inlay hints
+	 * @throws JavaModelException
+	 */
+	public static void assertInlayHints(MicroProfileJavaInlayHintParams params, IJDTUtils utils, InlayHint... expected)
+			throws JavaModelException {
+		List<InlayHint> actual = PropertiesManagerForJava.getInstance().inlayHint(params, utils,
+				new NullProgressMonitor());
+		assertInlayHint(actual, expected);
+	}
+
+	public static InlayHint ih(Position position, String label) {
+		return new InlayHint(position, Either.forLeft(label));
+	}
+
+	public static InlayHint ih(Position position, InlayHintLabelPart... parts) {
+		return new InlayHint(position, Either.forRight(Arrays.asList(parts)));
+	}
+
+	public static InlayHintLabelPart ihLabel(String label) {
+		return new InlayHintLabelPart(label);
+	}
+
+	public static InlayHintLabelPart ihLabel(String label, String tooltip, Command command) {
+		InlayHintLabelPart part = ihLabel(label);
+		part.setCommand(command);
+		part.setTooltip(tooltip);
+		return part;
+	}
+
+	public static void assertInlayHint(List<InlayHint> actual, InlayHint... expected) {
+		assertEquals(expected.length, actual.size());
+		for (int i = 0; i < expected.length; i++) {
+			assertEquals("position at " + i, expected[i].getPosition(), actual.get(i).getPosition());
+			assertEquals("label at " + i, expected[i].getLabel(), actual.get(i).getLabel());
+		}
 	}
 
 }

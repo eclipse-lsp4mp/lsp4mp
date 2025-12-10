@@ -13,6 +13,8 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.settings;
 
+import org.eclipse.lsp4mp.commons.MicroProfileInlayHintSettings;
+
 /**
  * Shared settings.
  *

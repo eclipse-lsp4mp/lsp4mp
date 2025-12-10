@@ -57,6 +57,8 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 	/** Indicates whether getConverter returns an Optional */
 	private boolean hasOptional;
 
+	private Object converterInstance;
+
 	/**
 	 * Creates a new FULL validator for the given type using the provided
 	 * {@code Config}.
@@ -114,7 +116,6 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 		getConverter.setAccessible(true);
 		Object optional = getConverter.invoke(config, forType);
 
-		Object converterInstance;
 		hasOptional = true;
 
 		try {
@@ -143,13 +144,22 @@ class FullConverterValidator extends AbstractConverterValidator<Object> {
 			ExecutionMode executionMode) {
 		Class<?> forType = getForType();
 		if (forType != null && forType.isEnum()) {
-			forType = (Class<?>) typeProvider.findType(forType.getTypeName(), enumConstNamesProvider,
-					executionMode);
+			forType = (Class<?>) typeProvider.findType(forType.getTypeName(), enumConstNamesProvider, executionMode);
 			try {
 				initialize();
 			} catch (Exception e) {
 				// Do nothing
 			}
 		}
+	}
+
+	@Override
+	public String getConverterClassName() {
+		return converterInstance != null ? converterInstance.getClass().getName() : null;
+	}
+
+	@Override
+	public String getConverterSimpleClassName() {
+		return converterInstance != null ? converterInstance.getClass().getSimpleName() : null;
 	}
 }

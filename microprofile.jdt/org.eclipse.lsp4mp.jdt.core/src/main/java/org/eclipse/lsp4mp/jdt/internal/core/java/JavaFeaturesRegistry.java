@@ -31,6 +31,7 @@ import org.eclipse.lsp4mp.jdt.internal.core.java.completion.JavaCompletionDefini
 import org.eclipse.lsp4mp.jdt.internal.core.java.definition.JavaDefinitionDefinition;
 import org.eclipse.lsp4mp.jdt.internal.core.java.diagnostics.JavaDiagnosticsDefinition;
 import org.eclipse.lsp4mp.jdt.internal.core.java.hover.JavaHoverDefinition;
+import org.eclipse.lsp4mp.jdt.internal.core.java.inlayhint.JavaInlayHintDefinition;
 import org.eclipse.lsp4mp.jdt.internal.core.java.symbols.JavaWorkspaceSymbolsDefinition;
 import org.eclipse.lsp4mp.jdt.internal.jaxrs.java.DefaultJaxRsInfoProvider;
 
@@ -44,6 +45,7 @@ public class JavaFeaturesRegistry {
 	private static final String EXTENSION_JAVA_FEATURE_PARTICIPANTS = "javaFeatureParticipants";
 	private static final String CODEACTION_ELT = "codeAction";
 	private static final String CODELENS_ELT = "codeLens";
+	private static final String INLAY_HINT_ELT = "inlayHint";
 	private static final String COMPLETION_ELT = "completion";
 	private static final String DEFINITION_ELT = "definition";
 	private static final String DIAGNOSTICS_ELT = "diagnostics";
@@ -58,6 +60,8 @@ public class JavaFeaturesRegistry {
 	private final List<JavaCodeActionDefinition> javaCodeActionDefinitions;
 
 	private final List<JavaCodeLensDefinition> javaCodeLensDefinitions;
+
+	private final List<JavaInlayHintDefinition> javaInlayHintDefinitions;
 
 	private final List<JavaCompletionDefinition> javaCompletionDefinitions;
 
@@ -81,6 +85,7 @@ public class JavaFeaturesRegistry {
 		javaFeatureDefinitionsLoaded = false;
 		javaCodeActionDefinitions = new ArrayList<>();
 		javaCodeLensDefinitions = new ArrayList<>();
+		javaInlayHintDefinitions = new ArrayList<>();
 		javaCompletionDefinitions = new ArrayList<>();
 		javaDefinitionDefinitions = new ArrayList<>();
 		javaDiagnosticsDefinitions = new ArrayList<>();
@@ -108,6 +113,16 @@ public class JavaFeaturesRegistry {
 	public List<JavaCodeLensDefinition> getJavaCodeLensDefinitions() {
 		loadJavaFeatureDefinitions();
 		return javaCodeLensDefinitions;
+	}
+
+	/**
+	 * Returns a list of inlayHint definition.
+	 *
+	 * @return a list of inlayHint definition.
+	 */
+	public List<JavaInlayHintDefinition> getJavaInlayHintDefinitions() {
+		loadJavaFeatureDefinitions();
+		return javaInlayHintDefinitions;
 	}
 
 	/**
@@ -211,6 +226,13 @@ public class JavaFeaturesRegistry {
 			}
 			break;
 		}
+		case INLAY_HINT_ELT: {
+			JavaInlayHintDefinition definition = new JavaInlayHintDefinition(ce);
+			synchronized (javaInlayHintDefinitions) {
+				javaInlayHintDefinitions.add(definition);
+			}
+			break;
+		}
 		case COMPLETION_ELT: {
 			JavaCompletionDefinition definition = new JavaCompletionDefinition(ce);
 			synchronized (javaCompletionDefinitions) {
@@ -246,7 +268,7 @@ public class JavaFeaturesRegistry {
 			}
 			break;
 		}
-		case JAXRS_ELT : {
+		case JAXRS_ELT: {
 			JaxRsInfoDefinition definition = new JaxRsInfoDefinition(ce);
 			synchronized (jaxRsInfoProviders) {
 				jaxRsInfoProviders.add(definition);

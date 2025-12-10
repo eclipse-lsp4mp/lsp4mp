@@ -18,7 +18,6 @@ import static org.eclipse.jdt.core.Signature.SIG_VOID;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJarEntryResource;
@@ -32,6 +31,8 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 /**
@@ -278,7 +279,7 @@ public class JDTTypeUtils {
 	}
 
 	public static IType getEnclosedType(IType type, String typeName, IJavaProject javaProject)
-		throws JavaModelException {
+			throws JavaModelException {
 		// type name is the string of the JDT type (which could be null if type is not
 		// retrieved)
 		String enclosedType = typeName;
@@ -299,15 +300,13 @@ public class JDTTypeUtils {
 		int end = fieldTypeName.lastIndexOf(">");
 		String keyValue = fieldTypeName.substring(start, end);
 		int index = keyValue.indexOf(',');
-		return new String[] {
-			keyValue.substring(0, index), keyValue.substring(index + 1, keyValue.length())
-		};
+		return new String[] { keyValue.substring(0, index), keyValue.substring(index + 1, keyValue.length()) };
 	}
 
 	public static boolean isPrimitiveType(String valueClass) {
 		return valueClass.equals("java.lang.String") || valueClass.equals("java.lang.Boolean")
-			|| valueClass.equals("java.lang.Integer") || valueClass.equals("java.lang.Long")
-			|| valueClass.equals("java.lang.Double") || valueClass.equals("java.lang.Float");
+				|| valueClass.equals("java.lang.Integer") || valueClass.equals("java.lang.Long")
+				|| valueClass.equals("java.lang.Double") || valueClass.equals("java.lang.Float");
 	}
 
 	public static boolean isMap(String mapValueClass) {
@@ -327,7 +326,7 @@ public class JDTTypeUtils {
 	}
 
 	public static IJarEntryResource findPropertiesResource(IPackageFragmentRoot packageRoot, String propertiesFileName)
-		throws JavaModelException {
+			throws JavaModelException {
 		Object[] resources = packageRoot.getNonJavaResources();
 		if (resources != null) {
 			for (Object object : resources) {
@@ -352,7 +351,7 @@ public class JDTTypeUtils {
 
 	public static boolean isSimpleFieldType(IType type, String typeName) throws JavaModelException {
 		return type == null || isPrimitiveType(typeName) || isList(typeName) || isMap(typeName) || isOptional(typeName)
-			|| (type != null && type.isEnum());
+				|| (type != null && type.isEnum());
 	}
 
 	public static boolean overlaps(ISourceRange typeRange, ISourceRange methodRange) {
@@ -362,7 +361,7 @@ public class JDTTypeUtils {
 		// method range is overlapping if it appears before or actually overlaps the
 		// type's range
 		return methodRange.getOffset() < typeRange.getOffset() || methodRange.getOffset() >= typeRange.getOffset()
-			&& methodRange.getOffset() <= (typeRange.getOffset() + typeRange.getLength());
+				&& methodRange.getOffset() <= (typeRange.getOffset() + typeRange.getLength());
 	}
 
 	/**
@@ -374,5 +373,36 @@ public class JDTTypeUtils {
 	 */
 	public static boolean isVoidReturnType(IMethod method) throws JavaModelException {
 		return SIG_VOID.equals(method.getReturnType());
+	}
+
+	/**
+	 * Utility method that attempts to extract a string value from a JDT Expression.
+	 * It handles: - StringLiteral nodes (e.g., "hello") - Compile-time constant
+	 * expressions that evaluate to String (e.g., "a" + "b") - Fallback to the
+	 * source representation of the expression
+	 *
+	 * @param expression the JDT Expression
+	 * @return the best possible string value representation, never null
+	 */
+	public static String extractStringValue(Expression expression) {
+		if (expression == null) {
+			return "";
+		}
+
+		// 1. Direct String literal: "hello"
+		if (expression instanceof StringLiteral literal) {
+			// Returns the literal value without the surrounding quotes
+			return literal.getLiteralValue();
+		}
+
+		// 2. Compile-time constant expression: "a" + "b"
+		Object constantValue = expression.resolveConstantExpressionValue();
+		if (constantValue instanceof String constantString) {
+			return constantString;
+		}
+
+		// 3. Fallback: return the Java source representation
+		// Example: aMethodCall("x") -> "aMethodCall(\"x\")"
+		return expression.toString();
 	}
 }
