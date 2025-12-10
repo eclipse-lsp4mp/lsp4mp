@@ -98,4 +98,9 @@ class SafeConverterValidator extends AbstractConverterValidator<Config> {
 		converter = result.get();
 		return true;
 	}
+	
+	@Override
+	public String getConverterName() {
+		return converter != null ? converter.getClass().getSimpleName() : null;
+	}
 }

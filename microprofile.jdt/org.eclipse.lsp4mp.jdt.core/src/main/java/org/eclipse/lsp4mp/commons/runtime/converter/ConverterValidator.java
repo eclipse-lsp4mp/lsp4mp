@@ -60,4 +60,6 @@ public interface ConverterValidator {
 	 *         otherwise
 	 */
 	boolean canValidate();
+
+	String getConverterName();
 }

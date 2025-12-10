@@ -101,4 +101,6 @@ public interface ConverterRuntimeSupportApi extends MicroProfileRuntimeSupport {
 	 */
 	void validate(String value, String type, EnumConstantsProvider enumConstNamesProvider,
 			DiagnosticsCollector collector);
+
+	String findConverter(String type, EnumConstantsProvider enumConstNamesProvider);
 }

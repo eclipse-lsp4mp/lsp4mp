@@ -40,6 +40,8 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
+import org.eclipse.lsp4j.InlayHint;
+import org.eclipse.lsp4j.InlayHintParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.MarkupKind;
@@ -57,6 +59,8 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDefinitionParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintSettings;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesScope;
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
@@ -71,9 +75,6 @@ import org.eclipse.lsp4mp.ls.properties.IPropertiesModelProvider;
 import org.eclipse.lsp4mp.model.Node;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.model.Property;
-import org.eclipse.lsp4mp.settings.MicroProfileCodeLensSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
 import org.eclipse.lsp4mp.snippets.JavaSnippetCompletionContext;
 import org.eclipse.lsp4mp.snippets.SnippetContextForJava;
@@ -191,10 +192,6 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 	}
 
 	// ------------------------------ Code Lens ------------------------------
-
-	public void updateCodeLensSettings(MicroProfileCodeLensSettings newCodeLens) {
-		sharedSettings.getCodeLensSettings().setUrlCodeLensEnabled(newCodeLens.isUrlCodeLensEnabled());
-	}
 
 	@Override
 	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
@@ -330,6 +327,21 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 		}, null);
 	}
 
+	// ------------------------------ Inlay hint------------------------------
+
+	@Override
+	public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
+		JavaTextDocument document = documents.get(params.getTextDocument().getUri());
+		return document.executeIfInMicroProfileProject((projectInfo, cancelChecker) -> {
+			ExecutionMode executionMode = sharedSettings.getExecutionSettings().getExecutionMode();
+			MicroProfileJavaInlayHintSettings settings = new MicroProfileJavaInlayHintSettings(executionMode);
+			settings.update(sharedSettings.getInlayHintSettings());
+			MicroProfileJavaInlayHintParams javaParams = new MicroProfileJavaInlayHintParams(
+					params.getTextDocument().getUri(), settings);
+			return microprofileLanguageServer.getLanguageClient().getJavaInlayHint(javaParams);
+		}, Collections.emptyList(), true);
+	}
+
 	// ------------------------------ Diagnostics ------------------------------
 
 	private void validate(JavaTextDocument javaTextDocument, boolean delay) {
@@ -407,21 +419,7 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 		}
 	}
 
-	public void updateExecutionSettings(MicroProfileExecutionSettings newExecution) {
-		// Update execution settings
-		MicroProfileExecutionSettings execution = sharedSettings.getExecutionSettings();
-		execution.update(newExecution);
-		// trigger validation for all opened application.properties
-		documents.all().stream().forEach(document -> {
-			triggerValidationFor(document);
-		});
-
-	}
-
-	public void updateValidationSettings(MicroProfileValidationSettings newValidation) {
-		// Update validation settings
-		MicroProfileValidationSettings validation = sharedSettings.getValidationSettings();
-		validation.update(newValidation);
+	public void triggerValidationAll() {
 		// trigger validation for all opened application.properties
 		documents.all().stream().forEach(document -> {
 			triggerValidationFor(document);

@@ -52,10 +52,11 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.InlayHint;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.lsp4mp.commons.DocumentFormat;
 import org.eclipse.lsp4mp.commons.JavaCursorContextKind;
 import org.eclipse.lsp4mp.commons.JavaCursorContextResult;
@@ -69,11 +70,13 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsSettings;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaFileInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintParams;
 import org.eclipse.lsp4mp.jdt.core.java.codelens.JavaCodeLensContext;
 import org.eclipse.lsp4mp.jdt.core.java.completion.JavaCompletionContext;
 import org.eclipse.lsp4mp.jdt.core.java.definition.JavaDefinitionContext;
 import org.eclipse.lsp4mp.jdt.core.java.diagnostics.JavaDiagnosticsContext;
 import org.eclipse.lsp4mp.jdt.core.java.hover.JavaHoverContext;
+import org.eclipse.lsp4mp.jdt.core.java.inlayhint.JavaInlayHintsContext;
 import org.eclipse.lsp4mp.jdt.core.utils.ASTNodeUtils;
 import org.eclipse.lsp4mp.jdt.core.utils.IJDTUtils;
 import org.eclipse.lsp4mp.jdt.core.utils.JDTMicroProfileUtils;
@@ -84,6 +87,7 @@ import org.eclipse.lsp4mp.jdt.internal.core.java.completion.JavaCompletionDefini
 import org.eclipse.lsp4mp.jdt.internal.core.java.definition.JavaDefinitionDefinition;
 import org.eclipse.lsp4mp.jdt.internal.core.java.diagnostics.JavaDiagnosticsDefinition;
 import org.eclipse.lsp4mp.jdt.internal.core.java.hover.JavaHoverDefinition;
+import org.eclipse.lsp4mp.jdt.internal.core.java.inlayhint.JavaInlayHintDefinition;
 import org.eclipse.lsp4mp.jdt.internal.core.java.symbols.JavaWorkspaceSymbolsDefinition;
 
 /**
@@ -200,6 +204,49 @@ public class PropertiesManagerForJava {
 			}
 		});
 		definitions.forEach(definition -> definition.endCodeLens(context, monitor));
+	}
+
+	/**
+	 * Returns the codelens list according the given codelens parameters.
+	 *
+	 * @param params  the codelens parameters
+	 * @param utils   the utilities class
+	 * @param monitor the monitor
+	 * @return the codelens list according the given codelens parameters.
+	 * @throws JavaModelException
+	 */
+	public List<InlayHint> inlayHint(MicroProfileJavaInlayHintParams params, IJDTUtils utils, IProgressMonitor monitor)
+			throws JavaModelException {
+		String uri = params.getUri();
+		ITypeRoot typeRoot = resolveTypeRoot(uri, utils, monitor);
+		if (typeRoot == null) {
+			return Collections.emptyList();
+		}
+		List<InlayHint> lenses = new ArrayList<>();
+		collectInlayHints(uri, typeRoot, utils, params, lenses, monitor);
+		if (monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
+		return lenses;
+	}
+
+	private void collectInlayHints(String uri, ITypeRoot typeRoot, IJDTUtils utils,
+			MicroProfileJavaInlayHintParams params, List<InlayHint> inlayHints, IProgressMonitor monitor) {
+		// Collect all adapted inlayHint participant
+		JavaInlayHintsContext context = new JavaInlayHintsContext(uri, typeRoot, utils, params, inlayHints);
+		List<JavaInlayHintDefinition> definitions = JavaFeaturesRegistry.getInstance().getJavaInlayHintDefinitions()
+				.stream().filter(definition -> definition.isAdaptedForInlayHint(context, monitor))
+				.collect(Collectors.toList());
+		if (definitions.isEmpty()) {
+			return;
+		}
+
+		// Begin, collect, end participants
+		definitions.forEach(definition -> definition.beginInlayHint(context, monitor));
+		definitions.forEach(definition -> {
+			definition.collectInlayHints(context, monitor);
+		});
+		definitions.forEach(definition -> definition.endInlayHint(context, monitor));
 	}
 
 	/**
@@ -339,7 +386,8 @@ public class PropertiesManagerForJava {
 		}
 
 		// Collect all adapted diagnostics participant
-		JavaDiagnosticsContext context = new JavaDiagnosticsContext(uri, typeRoot, utils, documentFormat, settings, diagnostics);
+		JavaDiagnosticsContext context = new JavaDiagnosticsContext(uri, typeRoot, utils, documentFormat, settings,
+				diagnostics);
 		List<JavaDiagnosticsDefinition> definitions = JavaFeaturesRegistry.getInstance().getJavaDiagnosticsDefinitions()
 				.stream().filter(definition -> definition.isAdaptedForDiagnostics(context, monitor))
 				.collect(Collectors.toList());
@@ -350,7 +398,7 @@ public class PropertiesManagerForJava {
 		// Begin, collect, end participants
 		definitions.forEach(definition -> definition.beginDiagnostics(context, monitor));
 		definitions.forEach(definition -> {
-			definition.collectDiagnostics(context, monitor);			
+			definition.collectDiagnostics(context, monitor);
 		});
 		definitions.forEach(definition -> definition.endDiagnostics(context, monitor));
 	}
