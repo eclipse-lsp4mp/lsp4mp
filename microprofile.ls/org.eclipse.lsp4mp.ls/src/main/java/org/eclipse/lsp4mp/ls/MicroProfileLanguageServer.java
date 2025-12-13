@@ -50,14 +50,8 @@ import org.eclipse.lsp4mp.ls.java.JavaTextDocuments;
 import org.eclipse.lsp4mp.services.properties.PropertiesFileLanguageService;
 import org.eclipse.lsp4mp.settings.AllMicroProfileSettings;
 import org.eclipse.lsp4mp.settings.InitializationOptionsSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileCodeLensSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileExtensionSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileGeneralClientSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileSymbolSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
 import org.eclipse.lsp4mp.settings.capabilities.MicroProfileCapabilityManager;
 import org.eclipse.lsp4mp.settings.capabilities.ServerCapabilitiesInitializer;
@@ -95,9 +89,9 @@ public class MicroProfileLanguageServer implements LanguageServer, ProcessLangua
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		LOGGER.info("Initializing MicroProfile server " + getVersion() + " with " + System.getProperty("java.home"));
-		
+
 		propertiesFileLanguageService.initializeParams(params);
-		
+
 		this.parentProcessId = params.getProcessId();
 
 		ExtendedClientCapabilities extendedClientCapabilities = InitializationOptionsExtendedClientCapabilities
@@ -144,30 +138,8 @@ public class MicroProfileLanguageServer implements LanguageServer, ProcessLangua
 		if (clientSettings != null) {
 			// Merge client settings with extension settings
 			extensionSettings.merge(clientSettings);
-			MicroProfileSymbolSettings newSymbols = clientSettings.getSymbols();
-			if (newSymbols != null) {
-				textDocumentService.updateSymbolSettings(newSymbols);
-			}
-			MicroProfileExecutionSettings newExecution = clientSettings.getExecution();
-			if (newExecution != null) {
-				textDocumentService.updateExecutionSettings(newExecution);
-			}
-			MicroProfileValidationSettings newValidation = clientSettings.getValidation();
-			if (newValidation != null) {
-				textDocumentService.updateValidationSettings(newValidation);
-			}
-			MicroProfileFormattingSettings newFormatting = clientSettings.getFormatting();
-			if (newFormatting != null) {
-				textDocumentService.updateFormattingSettings(newFormatting);
-			}
-			MicroProfileCodeLensSettings newCodeLens = clientSettings.getCodeLens();
-			if (newCodeLens != null) {
-				textDocumentService.updateCodeLensSettings(newCodeLens);
-			}
-			MicroProfileInlayHintSettings newInlayHint = clientSettings.getInlayHint();
-			if (newInlayHint != null) {
-				textDocumentService.updateInlayHintSettings(newInlayHint);
-			}
+			// Update client settings
+			textDocumentService.updateClientSettings(clientSettings);
 		}
 	}
 

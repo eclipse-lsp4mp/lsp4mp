@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.InlayHint;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
@@ -37,6 +38,7 @@ import org.eclipse.lsp4mp.commons.MicroProfileJavaDefinitionParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaDiagnosticsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaFileInfoParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaHoverParams;
+import org.eclipse.lsp4mp.commons.MicroProfileJavaInlayHintParams;
 import org.eclipse.lsp4mp.commons.MicroProfileJavaProjectLabelsParams;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfo;
 import org.eclipse.lsp4mp.commons.MicroProfileProjectInfoParams;
@@ -250,6 +252,11 @@ public class MockMicroProfileLanguageClient implements MicroProfileLanguageClien
 
 	@Override
 	public CompletableFuture<List<? extends CodeLens>> getJavaCodelens(MicroProfileJavaCodeLensParams javaParams) {
+		return CompletableFuture.completedFuture(null);
+	}
+	
+	@Override
+	public CompletableFuture<List<InlayHint>> getJavaInlayHint(MicroProfileJavaInlayHintParams javaParams) {
 		return CompletableFuture.completedFuture(null);
 	}
 

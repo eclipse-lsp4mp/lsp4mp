@@ -75,6 +75,11 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 		public boolean canValidate() {
 			return false;
 		}
+		
+		@Override
+		public String getConverterName() {
+			return null;
+		};
 	};
 
 	/** Configuration instance used for conversions */
@@ -125,6 +130,25 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 			}
 		} catch (Throwable e) {
 			LOGGER.log(Level.WARNING, "Error while validating '" + value + "' value with type '" + type + "'", e);
+		}
+	}
+
+	@Override
+	public String findConverter(String type, EnumConstantsProvider enumConstNamesProvider) {
+		try {
+			T cfg = getConfig();
+			if (cfg == null) {
+				return null;
+			}
+			ConverterValidator validator = converterCache.computeIfAbsent(type,
+					t -> resolveConverter(getProject().findType(t, enumConstNamesProvider, getExecutionMode()), cfg));
+			if (validator.canValidate()) {
+				return validator.getConverterName();
+			}
+			return null;
+		} catch (Throwable e) {
+			LOGGER.log(Level.WARNING, "Error while getting converter for type '" + type + "'", e);
+			return null;
 		}
 	}
 
@@ -292,6 +316,11 @@ public abstract class AbstractConverterRuntimeSupport<T> extends AbstractMicroPr
 			if (!currentValue.isEmpty()) {
 				delegate.validate(currentValue.toString(), startOffset, collector);
 			}
+		}
+		
+		@Override
+		public String getConverterName() {
+			return delegate.getConverterName();
 		}
 	}
 

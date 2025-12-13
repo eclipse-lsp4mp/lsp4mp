@@ -166,4 +166,9 @@ public class EnumTypeConverterValidator implements ConverterValidator {
     public boolean canValidate() {
         return true;
     }
+    
+    @Override
+    public String getConverterName() {
+    	return "EnumConverter";
+    }
 }

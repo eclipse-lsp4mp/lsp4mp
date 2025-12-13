@@ -37,7 +37,6 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
-import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
@@ -114,7 +113,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 					Expression prefixExpr = AnnotationUtils.getAnnotationMemberValueExpression(
 							(NormalAnnotation) modifier, CONFIG_PROPERTIES_ANNOTATION_PREFIX);
 					if (prefixExpr != null) {
-						currentPrefix = ((StringLiteral) prefixExpr).getLiteralValue();
+						currentPrefix = JDTTypeUtils.extractStringValue(prefixExpr);
 					}
 				} catch (JavaModelException e) {
 					LOGGER.log(Level.WARNING, "Exception when trying to get prefix of a @ConfigProperties annotation",
@@ -165,9 +164,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 	private void validatePropertyDefaultValue(Annotation annotation, Expression defaultValueExpr) {
 		FieldDeclaration fieldDeclaration = (FieldDeclaration) annotation.getParent();
 		if (defaultValueExpr != null) {
-			String defValue = defaultValueExpr instanceof StringLiteral
-					? ((StringLiteral) defaultValueExpr).getLiteralValue()
-					: null;
+			String defValue = JDTTypeUtils.extractStringValue(defaultValueExpr);
 			ITypeBinding fieldBinding = fieldDeclaration.getType().resolveBinding();
 			if (fieldBinding != null && defValue != null) {
 				if (isListLike(fieldBinding) && defValue.isEmpty()) {
@@ -195,7 +192,7 @@ public class MicroProfileConfigASTValidator extends JavaASTValidator {
 			boolean hasDefaultValue = defaultValueExpr != null;
 
 			if (nameExpression != null) {
-				name = ((StringLiteral) nameExpression).getLiteralValue();
+				name = JDTTypeUtils.extractStringValue(nameExpression);
 				name = MicroProfileConfigPropertyProvider.getPropertyName(name, currentPrefix);
 			}
 

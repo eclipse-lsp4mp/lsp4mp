@@ -119,7 +119,27 @@
          </attribute>
       </complexType>
    </element>
-   
+
+   <element name="inlayHint">
+      <annotation>
+         <documentation>
+            Java inlay hint participant.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  Name of a class that implements IJavaInlayHintParticipant.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.lsp4mp.jdt.core.java.inlayHint.IJavaInlayHintParticipant"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
    <element name="completion">
       <annotation>
          <documentation>
@@ -279,5 +299,8 @@
 &lt;/pre&gt;
       </documentation>
    </annotation>
+
+
+
 
 </schema>

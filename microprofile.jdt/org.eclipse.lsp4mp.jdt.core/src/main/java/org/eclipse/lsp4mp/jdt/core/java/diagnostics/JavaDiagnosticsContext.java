@@ -56,8 +56,6 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 
 	private final MicroProfileJavaDiagnosticsSettings settings;
 
-	private final MicroProfileProjectRuntime projectRuntime;
-
 	public JavaDiagnosticsContext(String uri, ITypeRoot typeRoot, IJDTUtils utils, DocumentFormat documentFormat,
 			MicroProfileJavaDiagnosticsSettings settings, List<Diagnostic> diagnostics) {
 		super(uri, typeRoot, utils);
@@ -69,19 +67,8 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 		} else {
 			this.settings = settings;
 		}
-		this.projectRuntime = getProjectRuntime();
 	}
 
-	private MicroProfileProjectRuntime getProjectRuntime() {
-		try {
-			JDTMicroProfileProject mpProject = JDTMicroProfileProjectManager.getInstance()
-					.getJDTMicroProfileProject(getJavaProject());
-			return mpProject.getProjectRuntime();
-		} catch (Exception e) {
-			// Do nothing
-			return null;
-		}
-	}
 
 	public DocumentFormat getDocumentFormat() {
 		return documentFormat;
@@ -141,11 +128,11 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 
 	public void validateWithConverter(String defValue, ITypeBinding fieldBinding, Expression defaultValueExpr) {
 		DiagnosticSeverity valueSeverity = getSettings().getValidationValueSeverity();
+		MicroProfileProjectRuntime projectRuntime = super.getProjectRuntime();
 		if (projectRuntime == null || valueSeverity == null) {
 			return;
 		}
 		ExecutionMode preferredMode = getSettings().getMode();
-
 		EnumConstantsProvider.SimpleEnumConstantsProvider provider = new EnumConstantsProvider.SimpleEnumConstantsProvider();
 		String fqn = toQualifiedTypeString(fieldBinding, provider);
 		projectRuntime.validateValue(defValue, fqn, provider, preferredMode,
@@ -154,50 +141,6 @@ public class JavaDiagnosticsContext extends AbtractJavaContext {
 							MicroProfileConfigErrorCode.DEFAULT_VALUE_IS_WRONG_TYPE.getCode(), valueSeverity, start + 1,
 							end);
 				});
-	}
-
-	private static String toQualifiedTypeString(ITypeBinding binding,
-			EnumConstantsProvider.SimpleEnumConstantsProvider provider) {
-		if (binding == null) {
-			return "";
-		}
-
-		// Primitive types
-		if (binding.isPrimitive() || (binding.isArray() && binding.getComponentType() != null
-				&& binding.getComponentType().isPrimitive())) {
-			// ex:
-			// - int, char, etc
-			// - int[], char[], etc
-			return binding.getName();
-		}
-
-		// Base qualified name (e.g., java.util.List)
-		String baseQualifieldName = binding.getErasure().getBinaryName();
-		if (binding.isEnum()) {
-			List<String> enumConstNames = new ArrayList<>();
-			for (IVariableBinding field : binding.getDeclaredFields()) {
-				if (field.isEnumConstant()) {
-					enumConstNames.add(field.getName());
-				}
-			}
-			provider.addEnumConstants(baseQualifieldName, enumConstNames);
-		}
-
-		StringBuilder sb = new StringBuilder(baseQualifieldName);
-
-		// Generic type arguments
-		ITypeBinding[] typeArguments = binding.getTypeArguments();
-		if (typeArguments != null && typeArguments.length > 0) {
-			sb.append("<");
-			for (int i = 0; i < typeArguments.length; i++) {
-				if (i > 0)
-					sb.append(", ");
-				sb.append(toQualifiedTypeString(typeArguments[i], provider));
-			}
-			sb.append(">");
-		}
-
-		return sb.toString();
 	}
 
 	public List<Diagnostic> getDiagnostics() {

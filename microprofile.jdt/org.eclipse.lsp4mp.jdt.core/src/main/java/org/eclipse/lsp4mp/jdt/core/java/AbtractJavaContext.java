@@ -13,14 +13,22 @@
 *******************************************************************************/
 package org.eclipse.lsp4mp.jdt.core.java;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.lsp4mp.commons.runtime.EnumConstantsProvider;
+import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
+import org.eclipse.lsp4mp.jdt.core.project.JDTMicroProfileProject;
+import org.eclipse.lsp4mp.jdt.core.project.JDTMicroProfileProjectManager;
 import org.eclipse.lsp4mp.jdt.core.utils.IJDTUtils;
 
 /**
@@ -38,8 +46,10 @@ public abstract class AbtractJavaContext {
 	private final IJDTUtils utils;
 
 	private Map<String, Object> cache;
-	
+
 	private CompilationUnit fASTRoot;
+
+	private MicroProfileProjectRuntime projectRuntime;
 
 	public AbtractJavaContext(String uri, ITypeRoot typeRoot, IJDTUtils utils) {
 		this.uri = uri;
@@ -63,7 +73,6 @@ public abstract class AbtractJavaContext {
 	public IJDTUtils getUtils() {
 		return utils;
 	}
-
 
 	/**
 	 * Associates the specified value with the specified key in the cache.
@@ -92,14 +101,14 @@ public abstract class AbtractJavaContext {
 		}
 		return cache.get(key);
 	}
-	
+
 	public CompilationUnit getASTRoot() {
 		if (fASTRoot == null) {
 			fASTRoot = ASTResolving.createQuickFixAST((ICompilationUnit) getTypeRoot(), null);
 		}
 		return fASTRoot;
 	}
-	
+
 	/**
 	 * @param root The ASTRoot to set.
 	 */
@@ -107,4 +116,69 @@ public abstract class AbtractJavaContext {
 		fASTRoot = root;
 	}
 
+	protected static String toQualifiedTypeString(ITypeBinding binding,
+			EnumConstantsProvider.SimpleEnumConstantsProvider provider) {
+		if (binding == null) {
+			return "";
+		}
+
+		// Primitive types
+		if (binding.isPrimitive() || (binding.isArray() && binding.getComponentType() != null
+				&& binding.getComponentType().isPrimitive())) {
+			// ex:
+			// - int, char, etc
+			// - int[], char[], etc
+			return binding.getName();
+		}
+
+		// Base qualified name (e.g., java.util.List)
+		String baseQualifieldName = binding.getErasure().getBinaryName();
+		if (binding.isEnum()) {
+			List<String> enumConstNames = new ArrayList<>();
+			for (IVariableBinding field : binding.getDeclaredFields()) {
+				if (field.isEnumConstant()) {
+					enumConstNames.add(field.getName());
+				}
+			}
+			provider.addEnumConstants(baseQualifieldName, enumConstNames);
+		}
+
+		StringBuilder sb = new StringBuilder(baseQualifieldName);
+
+		// Generic type arguments
+		ITypeBinding[] typeArguments = binding.getTypeArguments();
+		if (typeArguments != null && typeArguments.length > 0) {
+			sb.append("<");
+			for (int i = 0; i < typeArguments.length; i++) {
+				if (i > 0)
+					sb.append(", ");
+				sb.append(toQualifiedTypeString(typeArguments[i], provider));
+			}
+			sb.append(">");
+		}
+
+		return sb.toString();
+	}
+
+	public MicroProfileProjectRuntime getProjectRuntime() {
+		if (projectRuntime != null) {
+			return projectRuntime;
+		}
+		JDTMicroProfileProject mpProject = getMicroProfileProject();
+		if (mpProject == null) {
+			return null;
+		}
+		projectRuntime = mpProject.getProjectRuntime();
+		return projectRuntime;
+
+	}
+
+	public JDTMicroProfileProject getMicroProfileProject() {
+		try {
+			return JDTMicroProfileProjectManager.getInstance().getJDTMicroProfileProject(getJavaProject());
+		} catch (Exception e) {
+			// Do nothing
+		}
+		return null;
+	}
 }

@@ -86,12 +86,23 @@ public class MicroProfileProjectRuntime implements TypeProvider {
 
 	public void validateValue(String value, String type, EnumConstantsProvider enumConstNamesProvider,
 			ExecutionMode preferredMode, DiagnosticsCollector collector) {
+		ConverterRuntimeSupportApi converterRuntimeSupport = getConvertRuntimeSupport(preferredMode);
+		converterRuntimeSupport.validate(value, type, enumConstNamesProvider, collector);
+	}
+
+	private ConverterRuntimeSupportApi getConvertRuntimeSupport(ExecutionMode preferredMode) {
 		ConverterRuntimeSupportApi converterRuntimeSupport = getRuntimeSupport(ConverterRuntimeSupportApi.class,
 				preferredMode);
 		if (!converterRuntimeSupport.hasConfigProviderResolver()) {
 			converterRuntimeSupport = getRuntimeSupport(ConverterRuntimeSupportApi.class, ExecutionMode.SAFE);
 		}
-		converterRuntimeSupport.validate(value, type, enumConstNamesProvider, collector);
+		return converterRuntimeSupport;
+	}
+
+	public String findConverter(String type, EnumConstantsProvider enumConstNamesProvider,
+			ExecutionMode preferredMode) {
+		ConverterRuntimeSupportApi converterRuntimeSupport = getConvertRuntimeSupport(preferredMode);
+		return converterRuntimeSupport.findConverter(type, enumConstNamesProvider);
 	}
 
 	/**

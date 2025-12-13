@@ -64,11 +64,8 @@ import org.eclipse.lsp4mp.ls.commons.ValidatorDelayer;
 import org.eclipse.lsp4mp.model.PropertiesModel;
 import org.eclipse.lsp4mp.services.properties.CompletionData;
 import org.eclipse.lsp4mp.services.properties.PropertiesFileLanguageService;
-import org.eclipse.lsp4mp.settings.MicroProfileExecutionSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileFormattingSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileInlayHintSettings;
 import org.eclipse.lsp4mp.settings.MicroProfileSymbolSettings;
-import org.eclipse.lsp4mp.settings.MicroProfileValidationSettings;
 import org.eclipse.lsp4mp.settings.SharedSettings;
 import org.eclipse.lsp4mp.utils.JSONSchemaUtils;
 import org.eclipse.lsp4mp.utils.URIUtils;
@@ -286,7 +283,9 @@ public class PropertiesFileTextDocumentService extends AbstractTextDocumentServi
 
 	private List<InlayHint> inlayHint(InlayHintParams params, PropertiesModel document,
 			MicroProfileProjectInfo projectInfo, CancelChecker cancelChecker) {
-		return getPropertiesFileLanguageService().getInlayHint(document, projectInfo, params.getRange(), cancelChecker);
+		SharedSettings sharedSettings = getSharedSettings();
+		return getPropertiesFileLanguageService().getInlayHint(document, projectInfo, params.getRange(),
+				sharedSettings.getInlayHintSettings(), sharedSettings.getExecutionSettings(), cancelChecker);
 	}
 
 	private MicroProfileProjectInfoParams createProjectInfoParams(TextDocumentIdentifier id) {
@@ -397,28 +396,11 @@ public class PropertiesFileTextDocumentService extends AbstractTextDocumentServi
 		symbolSettings.setShowAsTree(newSettings.isShowAsTree());
 	}
 
-	public void updateExecutionSettings(MicroProfileExecutionSettings newExecution) {
-		// Update execution settings
-		MicroProfileExecutionSettings execution= sharedSettings.getExecutionSettings();
-		execution.update(newExecution);
+	public void triggerValidationAll() {
 		// trigger validation for all opened application.properties
 		documents.all().stream().forEach(document -> {
 			triggerValidationFor(document);
 		});
-	}
-	
-	public void updateValidationSettings(MicroProfileValidationSettings newValidation) {
-		// Update validation settings
-		MicroProfileValidationSettings validation = sharedSettings.getValidationSettings();
-		validation.update(newValidation);
-		// trigger validation for all opened application.properties
-		documents.all().stream().forEach(document -> {
-			triggerValidationFor(document);
-		});
-	}
-
-	public void updateInlayHintSettings(MicroProfileInlayHintSettings newInlayHint) {
-		sharedSettings.getInlayHintSettings().setEnabled(newInlayHint.isEnabled());
 	}
 
 	/**

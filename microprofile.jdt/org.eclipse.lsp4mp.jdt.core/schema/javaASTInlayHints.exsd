@@ -1,0 +1,173 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.lsp4mp.jdt.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.lsp4mp.jdt.core" id="javaASTInlayHints" name="Java AST InlayHints"/>
+      </appinfo>
+      <documentation>
+         This extension point allows adding a inlayHint to report LSP diagnostics which will be processed when AST is visited.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence minOccurs="1" maxOccurs="unbounded">
+            <element ref="inlayHint" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="annotationInlayHint" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="inlayHint">
+      <annotation>
+         <documentation>
+            The Java AST inlayHint managed by a custom class.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The Java class for AST InlayHint.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.lsp4mp.jdt.core.java.inlayHints.JavaASTInlayHint:"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="annotationInlayHint">
+      <annotation>
+         <documentation>
+            The Java AST inlayHint for annotation managed by declared rules.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence minOccurs="1" maxOccurs="unbounded">
+            <element ref="attribute" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="annotation" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The fully qualified annotation name of concern by the inlayHint
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="source" type="string">
+            <annotation>
+               <documentation>
+                  The source used when LSP diagnostic is created. The source is optional.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="attribute">
+      <annotation>
+         <documentation>
+            The attribute annotation to validate.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The attribute name to validate of the annotation.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="range" type="string">
+            <annotation>
+               <documentation>
+                  The range to respect for the value of the attribute. The range is specified like OSGi version syntax:
+
+ * 0 -&gt; means &gt;=0
+ * [0 -&gt; means &gt;=0
+ * (0 -&gt; means &gt;0
+ * [0,1] -&gt; means &gt;=0 &amp;&amp; &lt;=1
+ * (0,1] -&gt; means &gt;0 &amp;&amp; &lt;=1
+ * (0,1) -&gt; means &gt;0 &amp;&amp; &lt;1
+ * [0,1) -&gt; means &gt;=0 &amp;&amp; &lt;1
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         0.4.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         The following is an example of inlayHint with a custom class:
+
+&lt;pre&gt;
+   &lt;extension point=&quot;org.eclipse.lsp4mp.jdt.core.javaASTInlayHints&quot;&gt;
+      &lt;!-- Java validation for the MicroProfile @ConfigProperty annotation --&gt;
+      &lt;inlayHint class=&quot;org.eclipse.lsp4mp.jdt.internal.config.java.MicroProfileConfigASTInlayHint&quot; /&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+
+The following is an example of inlayHint which validates annotation attributes by using declared rules:
+
+&lt;pre&gt;
+   &lt;extension point=&quot;org.eclipse.lsp4mp.jdt.core.javaASTInlayHints&quot;&gt;
+      &lt;!-- Java validation for the MicroProfile Fault Tolerance annotations --&gt;
+      &lt;annotationInlayHint annotation=&quot;org.eclipse.microprofile.faulttolerance.CircuitBreaker&quot;
+                           source=&quot;microprofile-faulttolerance&quot; &gt;
+         &lt;attribute name=&quot;delay&quot; range=&quot;0&quot; /&gt; &lt;!-- x &gt;=0 --&gt;
+         &lt;attribute name=&quot;requestVolumeThreshold&quot; range=&quot;1&quot; /&gt; &lt;!-- x &gt;=1 --&gt;
+         &lt;attribute name=&quot;failureRatio&quot; range=&quot;[0,1]&quot; /&gt; &lt;!-- 0 &lt;= x &lt;= 1 --&gt;
+         &lt;attribute name=&quot;successThreshold&quot; range=&quot;1&quot; /&gt; &lt;!-- x &gt;=1 --&gt;         
+      &lt;/annotationInlayHint&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+
+
+
+</schema>
