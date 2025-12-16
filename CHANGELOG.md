@@ -1,5 +1,13 @@
 # MicroProfile Language Server Changelog
 
+## [0.16.0](https://github.com/eclipse-lsp4mp/lsp4mp/milestone/17?closed=1) (16 December, 2025)
+
+### Enhancements
+ * Add inlay hints for property type and property value converter used to properties files, and add inlay hint for default value in Java files. See [#529](https://github.com/eclipse-lsp4mp/lsp4mp/issues/529).
+
+### Bug Fixes
+ * Fix validating property values using user-provided custom converters. See [#532](https://github.com/eclipse-lsp4mp/lsp4mp/issues/532).
+
 ## [0.15.0](https://github.com/eclipse-lsp4mp/lsp4mp/milestone/16?closed=1) (5 December, 2025)
 
 ### Enhancements
