@@ -163,6 +163,10 @@ class PropertiesFileCompletions {
 	public CompletionItem resolveCompletionItem(CompletionItem unresolved, MicroProfileProjectInfo projectInfo,
 			MicroProfileCompletionCapabilities completionCapabilities, CancelChecker cancelChecker) {
 		String propertyName = unresolved.getLabel();
+		int index = propertyName.indexOf(" =" );
+		if (index != -1) {
+			propertyName = propertyName.substring(0, index);
+		}
 		boolean markdownSupported = completionCapabilities.isDocumentationFormatSupported(MarkupKind.MARKDOWN);
 		ItemMetadata property = PropertiesFileUtils.getProperty(propertyName, projectInfo);
 		if (property == null) {
@@ -235,16 +239,16 @@ class PropertiesFileCompletions {
 				continue;
 			}
 
-			String name = property.getName();
-			CompletionItem item = new CompletionItem(name);
-			item.setKind(CompletionItemKind.Property);
-
 			String defaultValue = null;
 			if (propertyValue == null || propertyValue.isEmpty()) {
 				defaultValue = property.getDefaultValue();
 			} else {
 				defaultValue = propertyValue;
 			}
+
+			String name = property.getName();
+			CompletionItem item = new CompletionItem(getKeyLabel(name, defaultValue));
+			item.setKind(CompletionItemKind.Property);
 
 			Collection<ValueHint> enums = PropertiesFileUtils.getEnums(property, projectInfo);
 
@@ -303,6 +307,20 @@ class PropertiesFileCompletions {
 			}
 			list.getItems().add(item);
 		}
+	}
+
+	private static String getKeyLabel(String name, String defaultValue) {
+		if (name.endsWith("[*]")) {
+			// No need to show [*] when property ends with [*]
+			name = name.substring(0, name.length() - 3);
+		}
+		if (StringUtils.isEmpty(defaultValue)) {
+			return name;
+		}
+		return new StringBuilder(name) //
+				.append(" = ") //
+				.append(defaultValue) //
+				.toString();
 	}
 
 	/**

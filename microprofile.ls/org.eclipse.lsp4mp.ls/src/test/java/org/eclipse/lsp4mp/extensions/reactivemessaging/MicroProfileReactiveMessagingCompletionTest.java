@@ -46,7 +46,7 @@ public class MicroProfileReactiveMessagingCompletionTest {
 				c("mp.messaging.outgoing.generated-price.connector",
 						"mp.messaging.outgoing.generated-price.connector=${1|smallrye-kafka,smallrye-amqp|}",
 						r(0, 0, 0)), //
-				c("mp.messaging.emitter.default-buffer-size", "mp.messaging.emitter.default-buffer-size=${0:128}",
+				c("mp.messaging.emitter.default-buffer-size = 128", "mp.messaging.emitter.default-buffer-size=${0:128}",
 						r(0, 0, 0)) //
 		);
 
@@ -59,10 +59,10 @@ public class MicroProfileReactiveMessagingCompletionTest {
 				c("mp.messaging.outgoing.generated-price.connector",
 						"mp.messaging.outgoing.generated-price.connector=${1|smallrye-kafka,smallrye-amqp|}",
 						r(1, 0, 0)), //
-				c("mp.messaging.emitter.default-buffer-size", "mp.messaging.emitter.default-buffer-size=${0:128}",
+				c("mp.messaging.emitter.default-buffer-size = 128", "mp.messaging.emitter.default-buffer-size=${0:128}",
 						r(1, 0, 0)), //
 				c("mp.messaging.incoming.prices.topic", "mp.messaging.incoming.prices.topic=$0", r(1, 0, 0)), //
-				c("mp.messaging.incoming.prices.bootstrap.servers",
+				c("mp.messaging.incoming.prices.bootstrap.servers = localhost:9092",
 						"mp.messaging.incoming.prices.bootstrap.servers=${0:localhost:9092}", r(1, 0, 0)));
 	}
 
@@ -79,7 +79,7 @@ public class MicroProfileReactiveMessagingCompletionTest {
 				c("mp.messaging.outgoing.generated-price.connector",
 						"mp.messaging.outgoing.generated-price.connector=${1|smallrye-kafka,smallrye-amqp|}",
 						r(1, 0, 0)), //
-				c("mp.messaging.emitter.default-buffer-size", "mp.messaging.emitter.default-buffer-size=${0:128}",
+				c("mp.messaging.emitter.default-buffer-size = 128", "mp.messaging.emitter.default-buffer-size=${0:128}",
 						r(1, 0, 0)));
 	}
 
