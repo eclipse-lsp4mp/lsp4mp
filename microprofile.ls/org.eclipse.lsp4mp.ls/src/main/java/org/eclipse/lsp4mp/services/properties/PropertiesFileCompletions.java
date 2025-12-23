@@ -249,7 +249,12 @@ class PropertiesFileCompletions {
 			String name = property.getName();
 			CompletionItem item = new CompletionItem(getKeyLabel(name, defaultValue));
 			item.setKind(CompletionItemKind.Property);
-
+			if (!propertyName.equals(item.getLabel())) {
+				// Completion label can be different from property name (ex: with profile property %dev.quarkus...
+				// a filter text must be defined with the property name to enable completion on client side.
+				item.setFilterText(propertyName);
+			}
+			
 			Collection<ValueHint> enums = PropertiesFileUtils.getEnums(property, projectInfo);
 
 			StringBuilder insertText = new StringBuilder();
