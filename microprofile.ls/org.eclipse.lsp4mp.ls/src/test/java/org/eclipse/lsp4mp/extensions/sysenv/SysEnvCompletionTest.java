@@ -39,8 +39,9 @@ public class SysEnvCompletionTest {
 	@Test
 	public void systemPropertiesInKey() throws BadLocationException {
 		String value = "|";
-		testCompletionFor(value, true,
-				c("user.name", "user.name=${0:" + System.getProperty("user.name") + "}", r(0, 0, 0)));
+		String userName = System.getProperty("user.name");
+		testCompletionFor(value, true, //
+				c("user.name = " + userName, "user.name=${0:" + userName + "}", r(0, 0, 0)));
 	}
 
 	@Test
@@ -52,7 +53,9 @@ public class SysEnvCompletionTest {
 	@Test
 	public void environmentVariablesInKey() throws BadLocationException {
 		String value = "|";
-		testCompletionFor(value, true, c(PATH_ENV, PATH_ENV + "=${0:" + System.getenv("PATH") + "}", r(0, 0, 0)));
+		String envPath = System.getenv("PATH");
+		testCompletionFor(value, true, //
+				c(PATH_ENV + " = " + envPath, PATH_ENV + "=${0:" + envPath + "}", r(0, 0, 0)));
 	}
 
 	@Test
