@@ -16,8 +16,6 @@ package org.eclipse.lsp4mp.services.properties;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4mp.commons.utils.JSONUtility;
 
-import com.google.gson.JsonObject;
-
 /**
  * Represents data sent to for completionItem/resolve
  *

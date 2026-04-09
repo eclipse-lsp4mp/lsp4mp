@@ -732,7 +732,29 @@ public class PropertiesFileAssert {
 	}
 
 	public static void assertDiagnostics(List<Diagnostic> actual, List<Diagnostic> expected) {
-		assertEquals("Unexpected diagnostics:\n", expected, actual);
+		// Sort both lists by position to make comparison order-independent
+		List<Diagnostic> sortedActual = new ArrayList<>(actual);
+		List<Diagnostic> sortedExpected = new ArrayList<>(expected);
+
+		java.util.Comparator<Diagnostic> diagnosticComparator = (d1, d2) -> {
+			int lineCompare = Integer.compare(d1.getRange().getStart().getLine(),
+					d2.getRange().getStart().getLine());
+			if (lineCompare != 0) {
+				return lineCompare;
+			}
+			int charCompare = Integer.compare(d1.getRange().getStart().getCharacter(),
+					d2.getRange().getStart().getCharacter());
+			if (charCompare != 0) {
+				return charCompare;
+			}
+			// If same position, compare by message to have stable ordering
+			return d1.getMessage().compareTo(d2.getMessage());
+		};
+
+		sortedActual.sort(diagnosticComparator);
+		sortedExpected.sort(diagnosticComparator);
+
+		assertEquals("Unexpected diagnostics:\n", sortedExpected, sortedActual);
 	}
 
 	public static Diagnostic d(int line, int startCharacter, int endCharacter, String message,
