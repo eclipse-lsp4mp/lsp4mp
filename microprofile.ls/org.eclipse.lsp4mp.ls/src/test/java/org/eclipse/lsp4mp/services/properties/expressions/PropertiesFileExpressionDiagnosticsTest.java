@@ -70,8 +70,6 @@ public class PropertiesFileExpressionDiagnosticsTest {
 		String value = "test.property = hello\n" + //
 				"other.property = ${test.property";
 		testDiagnosticsFor(value, //
-				d(0, 0, 13, "Unrecognized property 'test.property', it is not referenced in any Java files",
-						DiagnosticSeverity.Warning, ValidationType.unknown), //
 				d(1, 0, 14, "Unrecognized property 'other.property', it is not referenced in any Java files",
 						DiagnosticSeverity.Warning, ValidationType.unknown), //
 				d(1, 17, 32, "Missing '}'", DiagnosticSeverity.Error, ValidationType.syntax));
@@ -180,8 +178,6 @@ public class PropertiesFileExpressionDiagnosticsTest {
 		String value = "test.property = hello\n" + //
 				"other.property = ${test.property}";
 		testDiagnosticsFor(value, //
-				d(0, 0, 13, "Unrecognized property 'test.property', it is not referenced in any Java files",
-						DiagnosticSeverity.Warning, ValidationType.unknown), //
 				d(1, 0, 14, "Unrecognized property 'other.property', it is not referenced in any Java files",
 						DiagnosticSeverity.Warning, ValidationType.unknown));
 	}
@@ -204,4 +200,12 @@ public class PropertiesFileExpressionDiagnosticsTest {
 				d(0, 35, 38, "Bad level \"XXX\"", DiagnosticSeverity.Error, ValidationType.value));
 
 	}
+
+	@Test
+	public void validateReferencedPropertyExpressions() {
+		String value = "ENV_LEVEL=info\n" + //
+				"quarkus.log.file.level=${ENV_LEVEL}";
+		testDiagnosticsFor(value);
+	}
+
 }

@@ -67,6 +67,7 @@ class PropertiesFileValidator {
 	private final MicroProfileValidationSettings validationSettings;
 	private final PropertiesFileExtensionRegistry extensionRegistry;
 	private final Map<String, List<Property>> existingProperties;
+	private final Map<String, Property> potentiallyUnknownProperties;
 	private Set<String> declaredProperties;
 	private Map<String, ItemMetadata> availableProperties;
 
@@ -82,6 +83,7 @@ class PropertiesFileValidator {
 		this.validationSettings = validationSettings;
 		this.extensionRegistry = extensionRegistry;
 		this.existingProperties = new HashMap<String, List<Property>>();
+		this.potentiallyUnknownProperties = new HashMap<String, Property>();
 		// to be lazily init
 		this.declaredProperties = null;
 		this.availableProperties = null;
@@ -101,6 +103,7 @@ class PropertiesFileValidator {
 
 		addDiagnosticsForDuplicates();
 		addDiagnosticsForMissingRequired(document);
+		addDiagnosticsForUnknownProperties();
 	}
 
 	private void validateProperty(Property property, CancelChecker cancelChecker) {
@@ -196,8 +199,8 @@ class PropertiesFileValidator {
 			// The unknown validation must be ignored for this property name
 			return;
 		}
-		addDiagnostic("Unrecognized property '" + propertyName + "', it is not referenced in any Java files",
-				property.getKey(), severity, ValidationType.unknown.name());
+		// Store the property for later validation after all expressions are processed
+		potentiallyUnknownProperties.put(propertyName, property);
 	}
 
 	// ---------------- Property value validation
@@ -308,24 +311,17 @@ class PropertiesFileValidator {
 		if (expressionSeverity == null || syntaxSeverity == null) {
 			return;
 		}
+
+		// Lazy initialization: collect declared properties, available properties, and referenced properties
+		// in a single pass when processing the first expression
+		if (declaredProperties == null) {
+			initializePropertiesCollections(property.getOwnerModel());
+		}
+
 		for (Node child : property.getValue().getChildren()) {
 			if (child != null && child.getNodeType() == NodeType.PROPERTY_VALUE_EXPRESSION) {
 				PropertyValueExpression propValExpr = (PropertyValueExpression) child;
 				if (expressionSeverity != null) {
-					if (declaredProperties == null) {
-						// Collect names of all properties defined in the configuration file and the
-						// project information
-						declaredProperties = property.getOwnerModel().getChildren().stream().filter(n -> {
-							return n.getNodeType() == NodeType.PROPERTY;
-						}).map(prop -> {
-							return ((Property) prop).getPropertyNameWithProfile();
-						}).collect(Collectors.toSet());
-
-						availableProperties = projectInfo.getProperties()//
-								.stream() //
-								.collect(Collectors.toMap(ItemMetadata::getName, Function.identity(), (i1, i2) -> i1));
-					}
-
 					String refdProp = propValExpr.getReferencedPropertyName();
 					if (!declaredProperties.contains(refdProp)) {
 						// The referenced property name doesn't reference a property inside the file
@@ -427,6 +423,52 @@ class PropertiesFileValidator {
 			addDiagnostic("Missing required property value for '" + propertyName + "'", property, severity,
 					ValidationType.requiredValue.name());
 		}
+	}
+
+	private void addDiagnosticsForUnknownProperties() {
+		// Properties that are referenced in expressions have already been removed from potentiallyUnknownProperties
+		potentiallyUnknownProperties.forEach((propertyName, property) -> {
+			DiagnosticSeverity severity = validationSettings.getUnknown().getDiagnosticSeverity(propertyName);
+			if (severity != null) {
+				addDiagnostic("Unrecognized property '" + propertyName + "', it is not referenced in any Java files",
+						property.getKey(), severity, ValidationType.unknown.name());
+			}
+		});
+	}
+
+	/**
+	 * Initialize properties collections in a single pass over the properties model.
+	 * Collects:
+	 * - declaredProperties: all property names defined in the file
+	 * - availableProperties: all properties from project metadata
+	 * Also removes referenced properties from potentiallyUnknownProperties
+	 */
+	private void initializePropertiesCollections(PropertiesModel model) {
+		declaredProperties = new java.util.HashSet<>();
+
+		// Single pass to collect declared properties and remove referenced ones from potentially unknown
+		for (Node node : model.getChildren()) {
+			if (node.getNodeType() == NodeType.PROPERTY) {
+				Property prop = (Property) node;
+				// Collect declared property
+				declaredProperties.add(prop.getPropertyNameWithProfile());
+
+				// Remove referenced properties from potentiallyUnknownProperties
+				if (prop.getValue() != null) {
+					for (Node child : prop.getValue().getChildren()) {
+						if (child.getNodeType() == NodeType.PROPERTY_VALUE_EXPRESSION) {
+							PropertyValueExpression expr = (PropertyValueExpression) child;
+							potentiallyUnknownProperties.remove(expr.getReferencedPropertyName());
+						}
+					}
+				}
+			}
+		}
+
+		// Collect available properties from project metadata
+		availableProperties = projectInfo.getProperties()
+				.stream()
+				.collect(Collectors.toMap(ItemMetadata::getName, Function.identity(), (i1, i2) -> i1));
 	}
 
 	Diagnostic addDiagnostic(String message, Node node, DiagnosticSeverity severity, String code) {
