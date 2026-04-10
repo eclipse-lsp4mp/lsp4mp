@@ -129,8 +129,17 @@ public class JavaFileTextDocumentService extends AbstractTextDocumentService {
 
 	@Override
 	public void didSave(DidSaveTextDocumentParams params) {
+		// Do nothing..
+		
+		// Since the beginning of the MP LS project,
+		// saving a Java file triggers validation for all open Java files,
+		// which can negatively impact performance.
+		// As there's no comment explaining the reason for this behavior,
+		// we are disabling this feature.
+
 		// validate all opened java files which belong to a MicroProfile project
-		triggerValidationForAll(null);
+		// triggerValidationForAll(null);
+
 	}
 
 	// ------------------------------ Completion ------------------------------

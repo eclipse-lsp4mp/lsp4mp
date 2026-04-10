@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
@@ -30,11 +31,13 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.ElementChangedEvent;
 import org.eclipse.jdt.core.IElementChangedListener;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaElementDelta;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.lsp4mp.commons.MicroProfilePropertiesChangeEvent;
@@ -170,11 +173,17 @@ public class MicroProfilePropertiesListenerManager {
 			if (resource == null) {
 				return false;
 			}
+
+			// Step 5: Process folders, files, and projects as needed
 			switch (resource.getType()) {
 			case IResource.ROOT:
+				return true;
 			case IResource.PROJECT:
+				IProject project = (IProject) resource;
+				return project.isAccessible() && project.hasNature(JavaCore.NATURE_ID);
 			case IResource.FOLDER:
-				return resource.isAccessible();
+				// Ignore folder which belongs to Java output file location (ex: target/classes)
+				return resource.isAccessible() && !isInOutput(resource);
 			case IResource.FILE:
 				IFile file = (IFile) resource;
 				if (isJavaFile(file) && isFileContentChanged(delta)) {
@@ -195,6 +204,43 @@ public class MicroProfilePropertiesListenerManager {
 					event.setProjectURIs(new HashSet<String>());
 					event.getProjectURIs().add(JDTMicroProfileUtils.getProjectURI(file.getProject()));
 					fireAsyncEvent(event);
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * Returns true if the given (folder) resource is in the Java output location
+		 * (ex : /target/classes) and false otherwise (ex: src/main/java).
+		 * 
+		 * @param resource the folder resource.
+		 * @return true if the given (folder) resource is in the Java output location
+		 *         (ex : /target/classes) and false otherwise (ex: src/main/java).
+		 * @throws JavaModelException
+		 */
+		private static boolean isInOutput(IResource resource) throws JavaModelException {
+
+			IJavaProject javaProject = JavaCore.create(resource.getProject());
+			IPath resourcePath = resource.getFullPath();
+
+			// Exclude resources in the main output location (e.g.,/ProjectName/bin)
+			IPath outputLocation = javaProject.getOutputLocation();
+			IPath outputFullPath = ResourcesPlugin.getWorkspace().getRoot().getFolder(outputLocation).getFullPath();
+			if (outputFullPath.isPrefixOf(resourcePath)) {
+				return true;
+			}
+
+			// Exclude resources in custom output locations (if any)
+			for (IPackageFragmentRoot root : javaProject.getPackageFragmentRoots()) {
+				if (root.getKind() == IPackageFragmentRoot.K_SOURCE) {
+					IPath customOutput = root.getRawClasspathEntry().getOutputLocation();
+					if (customOutput != null) {
+						IPath customFullPath = ResourcesPlugin.getWorkspace().getRoot().getFolder(customOutput)
+								.getFullPath();
+						if (customFullPath.isPrefixOf(resourcePath)) {
+							return true;
+						}
+					}
 				}
 			}
 			return false;
