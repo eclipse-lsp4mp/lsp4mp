@@ -35,7 +35,7 @@ public class SysEnvDiagnosticsTest {
 		// dbuser doesn't exists a System property
 		String value = "dbuser = FOO";
 		testDiagnosticsFor(value, //
-				d(0, 0, 6, "Unrecognized property 'dbuser', it is not referenced in any Java files",
+				d(0, 0, 6, "Unrecognized property 'dbuser', it is not referenced in any Java, Properties files",
 						DiagnosticSeverity.Warning, ValidationType.unknown));
 
 		// user.name exists as System property
@@ -61,7 +61,7 @@ public class SysEnvDiagnosticsTest {
 		// DBUSER doesn't exists a Environment variable
 		String value = "DBUSER = FOO";
 		testDiagnosticsFor(value, //
-				d(0, 0, 6, "Unrecognized property 'DBUSER', it is not referenced in any Java files",
+				d(0, 0, 6, "Unrecognized property 'DBUSER', it is not referenced in any Java, Properties files",
 						DiagnosticSeverity.Warning, ValidationType.unknown));
 
 		// PATH exists as Environment variable

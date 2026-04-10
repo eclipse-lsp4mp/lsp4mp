@@ -70,6 +70,7 @@ class PropertiesFileValidator {
 	private final Map<String, Property> potentiallyUnknownProperties;
 	private Set<String> declaredProperties;
 	private Map<String, ItemMetadata> availableProperties;
+	private Set<String> referencedProperties;
 
 	private ValidationKeyContext validationKeyContext;
 	private ValidationValueContext validationValueContext;
@@ -87,6 +88,7 @@ class PropertiesFileValidator {
 		// to be lazily init
 		this.declaredProperties = null;
 		this.availableProperties = null;
+		this.referencedProperties = null;
 	}
 
 	public void validate(PropertiesModel document, CancelChecker cancelChecker) {
@@ -312,7 +314,8 @@ class PropertiesFileValidator {
 			return;
 		}
 
-		// Lazy initialization: collect declared properties, available properties, and referenced properties
+		// Lazy initialization: collect declared properties, available properties, and
+		// referenced properties
 		// in a single pass when processing the first expression
 		if (declaredProperties == null) {
 			initializePropertiesCollections(property.getOwnerModel());
@@ -426,11 +429,20 @@ class PropertiesFileValidator {
 	}
 
 	private void addDiagnosticsForUnknownProperties() {
-		// Properties that are referenced in expressions have already been removed from potentiallyUnknownProperties
+		// Properties that are referenced in expressions have already been removed from
+		// potentiallyUnknownProperties
+		// or are in referencedProperties set
 		potentiallyUnknownProperties.forEach((propertyName, property) -> {
+			// Skip properties that are referenced in expressions (they may have been added
+			// after initialization)
+			if (referencedProperties != null && referencedProperties.contains(propertyName)) {
+				return;
+			}
 			DiagnosticSeverity severity = validationSettings.getUnknown().getDiagnosticSeverity(propertyName);
 			if (severity != null) {
-				addDiagnostic("Unrecognized property '" + propertyName + "', it is not referenced in any Java files",
+				addDiagnostic(
+						"Unrecognized property '" + propertyName
+								+ "', it is not referenced in any Java, Properties files",
 						property.getKey(), severity, ValidationType.unknown.name());
 			}
 		});
@@ -438,27 +450,29 @@ class PropertiesFileValidator {
 
 	/**
 	 * Initialize properties collections in a single pass over the properties model.
-	 * Collects:
-	 * - declaredProperties: all property names defined in the file
-	 * - availableProperties: all properties from project metadata
-	 * Also removes referenced properties from potentiallyUnknownProperties
+	 * Collects: - declaredProperties: all property names defined in the file -
+	 * availableProperties: all properties from project metadata -
+	 * referencedProperties: all properties referenced in expressions
 	 */
 	private void initializePropertiesCollections(PropertiesModel model) {
 		declaredProperties = new java.util.HashSet<>();
 
-		// Single pass to collect declared properties and remove referenced ones from potentially unknown
+		// Single pass to collect declared properties and referenced properties
 		for (Node node : model.getChildren()) {
 			if (node.getNodeType() == NodeType.PROPERTY) {
 				Property prop = (Property) node;
 				// Collect declared property
 				declaredProperties.add(prop.getPropertyNameWithProfile());
 
-				// Remove referenced properties from potentiallyUnknownProperties
+				// Collect referenced properties in expressions
 				if (prop.getValue() != null) {
 					for (Node child : prop.getValue().getChildren()) {
 						if (child.getNodeType() == NodeType.PROPERTY_VALUE_EXPRESSION) {
 							PropertyValueExpression expr = (PropertyValueExpression) child;
-							potentiallyUnknownProperties.remove(expr.getReferencedPropertyName());
+							if (referencedProperties == null) {
+								referencedProperties = new java.util.HashSet<>();
+							}
+							referencedProperties.add(expr.getReferencedPropertyName());
 						}
 					}
 				}
@@ -466,8 +480,7 @@ class PropertiesFileValidator {
 		}
 
 		// Collect available properties from project metadata
-		availableProperties = projectInfo.getProperties()
-				.stream()
+		availableProperties = projectInfo.getProperties().stream()
 				.collect(Collectors.toMap(ItemMetadata::getName, Function.identity(), (i1, i2) -> i1));
 	}
 
