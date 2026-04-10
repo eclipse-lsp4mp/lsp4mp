@@ -45,7 +45,7 @@ public class PropertiesFileCodeActionsTest {
 				"\n" + //
 				"";
 		Diagnostic d = d(1, 0, 23,
-				"Unrecognized property 'quarkus.application.nme', it is not referenced in any Java files",
+				"Unrecognized property 'quarkus.application.nme', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 
 		testDiagnosticsFor(value, d);
@@ -65,22 +65,22 @@ public class PropertiesFileCodeActionsTest {
 				"abcdefghij.readiness-probe.initial-delay-seconds=20\n" + //
 				"abcdefghij.readiness-probe.period-seconds=45";
 
-		Diagnostic d1 = d(0, 0, 16, "Unrecognized property 'abcdefghij.group', it is not referenced in any Java files",
+		Diagnostic d1 = d(0, 0, 16, "Unrecognized property 'abcdefghij.group', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 		Diagnostic d2 = d(1, 0, 19,
-				"Unrecognized property 'abcdefghij.registry', it is not referenced in any Java files",
+				"Unrecognized property 'abcdefghij.registry', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 		Diagnostic d3 = d(2, 0, 24,
-				"Unrecognized property 'abcdefghij.labels[0].key', it is not referenced in any Java files",
+				"Unrecognized property 'abcdefghij.labels[0].key', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 		Diagnostic d4 = d(3, 0, 26,
-				"Unrecognized property 'abcdefghij.labels[0].value', it is not referenced in any Java files",
+				"Unrecognized property 'abcdefghij.labels[0].value', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 		Diagnostic d5 = d(4, 0, 48,
-				"Unrecognized property 'abcdefghij.readiness-probe.initial-delay-seconds', it is not referenced in any Java files",
+				"Unrecognized property 'abcdefghij.readiness-probe.initial-delay-seconds', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 		Diagnostic d6 = d(5, 0, 41,
-				"Unrecognized property 'abcdefghij.readiness-probe.period-seconds', it is not referenced in any Java files",
+				"Unrecognized property 'abcdefghij.readiness-probe.period-seconds', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 
 		testDiagnosticsFor(value, d1, d2, d3, d4, d5, d6);
@@ -107,9 +107,9 @@ public class PropertiesFileCodeActionsTest {
 		String value = "a.b.c.d=123\n" + //
 				"a.c.d=123";
 
-		Diagnostic d1 = d(0, 0, 7, "Unrecognized property 'a.b.c.d', it is not referenced in any Java files",
+		Diagnostic d1 = d(0, 0, 7, "Unrecognized property 'a.b.c.d', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
-		Diagnostic d2 = d(1, 0, 5, "Unrecognized property 'a.c.d', it is not referenced in any Java files",
+		Diagnostic d2 = d(1, 0, 5, "Unrecognized property 'a.c.d', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 
 		testDiagnosticsFor(value, d1, d2);
@@ -126,7 +126,7 @@ public class PropertiesFileCodeActionsTest {
 
 		String value = "quarkus.a.b.c.d=123";
 
-		Diagnostic d = d(0, 0, 15, "Unrecognized property 'quarkus.a.b.c.d', it is not referenced in any Java files",
+		Diagnostic d = d(0, 0, 15, "Unrecognized property 'quarkus.a.b.c.d', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 
 		testDiagnosticsFor(value, d);
@@ -140,7 +140,7 @@ public class PropertiesFileCodeActionsTest {
 
 		String value = "a.b.c.d=123";
 
-		Diagnostic d1 = d(0, 0, 7, "Unrecognized property 'a.b.c.d', it is not referenced in any Java files",
+		Diagnostic d1 = d(0, 0, 7, "Unrecognized property 'a.b.c.d', it is not referenced in any Java, Properties files",
 				DiagnosticSeverity.Warning, ValidationType.unknown);
 
 		testDiagnosticsFor(value, d1);
