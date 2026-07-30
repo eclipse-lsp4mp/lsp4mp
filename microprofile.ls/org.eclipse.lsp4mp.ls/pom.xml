@@ -29,7 +29,7 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
 		<dev.build.timestamp>${maven.build.timestamp}</dev.build.timestamp>
-		<lsp4j.version>0.14.0</lsp4j.version>
+		<lsp4j.version>1.0.0</lsp4j.version>
 		<releases.repo.id>repo.eclipse.org</releases.repo.id>
 		<releases.repo.url>https://repo.eclipse.org/content/repositories/lsp4mp-releases/</releases.repo.url>
 		<snapshots.repo.id>repo.eclipse.org</snapshots.repo.id>
@@ -145,6 +145,16 @@
 			<groupId>io.smallrye.config</groupId>
 			<artifactId>smallrye-config</artifactId>
 			<version>3.14.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>33.6.0-jre</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.xtext</groupId>
+			<artifactId>org.eclipse.xtext.xbase.lib</artifactId>
+			<version>2.42.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

@@ -112,7 +112,11 @@ public class ChangeUtil {
 			}
 
 			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, 0);
-			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, converter.convert());
+			List<Either<org.eclipse.lsp4j.TextEdit, org.eclipse.lsp4j.SnippetTextEdit>> edits = new ArrayList<>();
+			for (org.eclipse.lsp4j.TextEdit te : converter.convert()) {
+			    edits.add(Either.forLeft(te));
+			}
+			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, edits);
 			changes.add(Either.forLeft(documentEdit));
 		} else {
 

@@ -296,7 +296,7 @@ class PropertiesFileCodeActions {
 
 			for (int i = 0; i < requiredDiagnostics.size(); i++) {
 				Diagnostic diagnostic = requiredDiagnostics.get(i);
-				stringToInsert.append(getPropertyNameFromRequiredMessage(diagnostic.getMessage()));
+				stringToInsert.append(getPropertyNameFromRequiredMessage(diagnostic.getMessage().getLeft()));
 				stringToInsert.append(assign);
 
 				if (i < requiredDiagnostics.size() - 1) {

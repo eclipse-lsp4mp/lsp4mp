@@ -57,6 +57,7 @@ import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentEdit;
@@ -748,7 +749,7 @@ public class PropertiesFileAssert {
 				return charCompare;
 			}
 			// If same position, compare by message to have stable ordering
-			return d1.getMessage().compareTo(d2.getMessage());
+			return d1.getMessage().getLeft().compareTo(d2.getMessage().getLeft());
 		};
 
 		sortedActual.sort(diagnosticComparator);
@@ -860,7 +861,7 @@ public class PropertiesFileAssert {
 			VersionedTextDocumentIdentifier versionedTextDocumentIdentifier = new VersionedTextDocumentIdentifier(
 					"microprofile-config.properties", 0);
 			TextDocumentEdit textDocumentEdit = new TextDocumentEdit(versionedTextDocumentIdentifier,
-					Collections.singletonList(te));
+					Collections.singletonList(Either.<TextEdit, SnippetTextEdit>forLeft(te)));
 			WorkspaceEdit workspaceEdit = new WorkspaceEdit(
 					Collections.singletonList(Either.forLeft(textDocumentEdit)));
 			codeAction.setEdit(workspaceEdit);
