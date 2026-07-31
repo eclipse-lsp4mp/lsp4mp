@@ -111,8 +111,7 @@ public class ChangeUtil {
 				root.setDocumentChanges(changes);
 			}
 
-			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, 0);
-			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, converter.convert());
+			TextDocumentEdit documentEdit = converter.convertToTextDocumentEdit(0);
 			changes.add(Either.forLeft(documentEdit));
 		} else {
 

@@ -142,7 +142,7 @@ public class NoValueAssignedToPropertyQuickFix implements IJavaCodeActionPartici
 		VersionedTextDocumentIdentifier documentId = new VersionedTextDocumentIdentifier(document.getUri(),
 				document.getVersion());
 		TextEdit te = new TextEdit(new Range(position, position), insertText);
-		return new TextDocumentEdit(documentId, Collections.singletonList(te));
+		return new TextDocumentEdit(documentId, Collections.singletonList(Either.forLeft(te)));
 	}
 
 	private static String getPropertyName(Diagnostic diagnostic, JavaCodeActionContext context)

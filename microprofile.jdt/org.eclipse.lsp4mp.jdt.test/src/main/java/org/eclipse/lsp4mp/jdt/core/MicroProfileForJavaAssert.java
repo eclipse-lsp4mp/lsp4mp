@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -137,7 +139,11 @@ public class MicroProfileForJavaAssert {
 
 		VersionedTextDocumentIdentifier versionedTextDocumentIdentifier = new VersionedTextDocumentIdentifier(uri, 0);
 
-		TextDocumentEdit textDocumentEdit = new TextDocumentEdit(versionedTextDocumentIdentifier, Arrays.asList(te));
+		List<Either<TextEdit, SnippetTextEdit>> edits = new ArrayList<>();
+		for (TextEdit edit : te) {
+		    edits.add(Either.forLeft(edit));
+		}
+		TextDocumentEdit textDocumentEdit = new TextDocumentEdit(versionedTextDocumentIdentifier, edits);
 		WorkspaceEdit workspaceEdit = new WorkspaceEdit(Arrays.asList(Either.forLeft(textDocumentEdit)));
 		codeAction.setEdit(workspaceEdit);
 		codeAction.setData(new CodeActionData(id));
@@ -226,11 +232,11 @@ public class MicroProfileForJavaAssert {
 	public static void assertDiagnostics(List<Diagnostic> actual, List<Diagnostic> expected, boolean filter) {
 		List<Diagnostic> received = actual;
 		final boolean filterMessage;
-		if (expected != null && !expected.isEmpty()
-				&& (expected.get(0).getMessage() == null || expected.get(0).getMessage().isEmpty())) {
-			filterMessage = true;
+		if (expected != null && !expected.isEmpty()) {
+		    Either<String, MarkupContent> message = expected.get(0).getMessage();
+		    filterMessage = message == null || (message.isLeft() && (message.getLeft() == null || message.getLeft().isEmpty()));
 		} else {
-			filterMessage = false;
+		    filterMessage = false;
 		}
 		if (filter) {
 			received = actual.stream().map(d -> {

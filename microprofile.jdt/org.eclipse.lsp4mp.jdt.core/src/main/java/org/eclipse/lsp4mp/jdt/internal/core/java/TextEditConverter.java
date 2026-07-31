@@ -25,6 +25,8 @@ import org.eclipse.jdt.internal.core.util.SimpleDocument;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextDocumentEdit;
+import org.eclipse.lsp4j.SnippetTextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4mp.jdt.core.utils.IJDTUtils;
 import org.eclipse.text.edits.CopySourceEdit;
@@ -78,9 +80,12 @@ public class TextEditConverter extends TextEditVisitor {
 	}
 
 	public TextDocumentEdit convertToTextDocumentEdit(int version) {
-		VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(version);
-		identifier.setUri(uri);
-		return new TextDocumentEdit(identifier, this.convert());
+	    VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, version);
+	    List<Either<org.eclipse.lsp4j.TextEdit, SnippetTextEdit>> edits = new ArrayList<>();
+	    for (org.eclipse.lsp4j.TextEdit te : this.convert()) {
+	        edits.add(Either.forLeft(te));
+	    }
+	    return new TextDocumentEdit(identifier, edits);
 	}
 
 	/*

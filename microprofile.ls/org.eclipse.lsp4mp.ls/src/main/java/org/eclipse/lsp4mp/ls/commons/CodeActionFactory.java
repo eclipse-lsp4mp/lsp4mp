@@ -22,6 +22,7 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.TextEdit;
@@ -86,7 +87,7 @@ public class CodeActionFactory {
 				document.getUri(), document.getVersion());
 
 		TextDocumentEdit textDocumentEdit = new TextDocumentEdit(versionedTextDocumentIdentifier,
-				Collections.singletonList(edit));
+				Collections.singletonList(Either.<TextEdit, SnippetTextEdit>forLeft(edit)));
 		WorkspaceEdit workspaceEdit = new WorkspaceEdit(Collections.singletonList(Either.forLeft(textDocumentEdit)));
 		insertContentAction.setEdit(workspaceEdit);
 		return insertContentAction;
@@ -103,7 +104,7 @@ public class CodeActionFactory {
 				document.getUri(), document.getVersion());
 
 		TextDocumentEdit textDocumentEdit = new TextDocumentEdit(versionedTextDocumentIdentifier,
-				Collections.singletonList(edit));
+				Collections.singletonList(Either.<TextEdit, SnippetTextEdit>forLeft(edit)));
 		WorkspaceEdit workspaceEdit = new WorkspaceEdit(Collections.singletonList(Either.forLeft(textDocumentEdit)));
 		replaceContentAction.setEdit(workspaceEdit);
 		return replaceContentAction;
