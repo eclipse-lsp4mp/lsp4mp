@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.lsp4mp.commons.runtime.converter.safe;
 
+import java.time.Duration;
+
 import org.eclipse.lsp4mp.commons.runtime.ExecutionMode;
 import org.eclipse.lsp4mp.commons.runtime.MicroProfileProjectRuntime;
 import org.eclipse.lsp4mp.commons.runtime.converter.AbstractConverterRuntimeSupport;
@@ -47,6 +49,11 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 public class SafeConverterRuntimeSupport extends AbstractConverterRuntimeSupport<Config> {
 
 	/**
+	 * Classpath token identifying a project that uses SmallRye Config (e.g. Quarkus).
+	 */
+	private static final String SMALLRYE_CONFIG = "smallrye-config";
+
+	/**
 	 * Constructs a new SAFE runtime support instance for the given project.
 	 *
 	 * @param project the owning MicroProfile project runtime
@@ -62,7 +69,14 @@ public class SafeConverterRuntimeSupport extends AbstractConverterRuntimeSupport
 	 */
 	@Override
 	protected Config loadConfig() {
-		return new SmallRyeConfigBuilder().build();
+		SmallRyeConfigBuilder builder = new SmallRyeConfigBuilder();
+		// The relaxed Duration format (e.g. "60S", or a bare number interpreted as seconds) is a
+		// SmallRye Config / Quarkus convention. Only enable it when the project actually uses SmallRye
+		// Config, so that strict MicroProfile runtimes (e.g. Open Liberty) keep ISO-8601 validation.
+		if (getProject().hasClasspathEntry(SMALLRYE_CONFIG)) {
+			builder.withConverter(Duration.class, 100, new DurationConverter());
+		}
+		return builder.build();
 	}
 
 	/**
