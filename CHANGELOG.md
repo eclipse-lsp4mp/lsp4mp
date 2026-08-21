@@ -1,5 +1,10 @@
 # MicroProfile Language Server Changelog
 
+## [0.18.0](https://github.com/eclipse-lsp4mp/lsp4mp/milestone/19?closed=1) (24 August, 2026)
+
+### Bug Fixes
+ * Upgrade JDT LS to 1.60.0 and lsp4j to 1.0.0. See [#549](https://github.com/eclipse-lsp4mp/lsp4mp/issues/549).
+
 ## [0.17.0](https://github.com/eclipse-lsp4mp/lsp4mp/milestone/18?closed=1) (22 April, 2026)
 
 ### Enhancements
