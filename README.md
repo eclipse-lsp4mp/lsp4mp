@@ -48,7 +48,7 @@ For information on the architecture/project structure see [architecture.md](./do
 
 ## Getting started
 
-JDK 11 is required to build the language server and the `eclipse.jdt.ls` extension.
+JDK 21 is required to build the language server and the `eclipse.jdt.ls` extension.
 
 1. Clone this repository
 2. Open the folder in your terminal / command line
