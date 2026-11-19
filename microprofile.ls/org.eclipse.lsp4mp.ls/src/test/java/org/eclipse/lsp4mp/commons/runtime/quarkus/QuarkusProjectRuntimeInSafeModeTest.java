@@ -71,4 +71,30 @@ public class QuarkusProjectRuntimeInSafeModeTest extends AbstractMicroProfilePro
 		assertValiateWithConverter("FOOX", "org.acme.MyEnum");
 	}
 
+	/**
+	 * Tests the relaxed {@link java.time.Duration} format used by Quarkus/SmallRye.
+	 * <p>
+	 * SmallRye Config does not register an explicit converter for {@link java.time.Duration},
+	 * so SAFE mode relies on the embedded {@code DurationConverter} to accept a bare number
+	 * as seconds and digit-leading values as ISO-8601 durations without the {@code PT} prefix,
+	 * in addition to the strict ISO-8601 form.
+	 * </p>
+	 */
+	@Test
+	public void testDuration() {
+		// Relaxed forms (value starting with a digit is parsed as an ISO-8601 duration without "PT")
+		assertValiateWithConverter("60S", "java.time.Duration");
+		assertValiateWithConverter("10m", "java.time.Duration");
+		assertValiateWithConverter("3h", "java.time.Duration");
+
+		// A bare number is interpreted as a number of seconds
+		assertValiateWithConverter("600", "java.time.Duration");
+
+		// Strict ISO-8601 still works
+		assertValiateWithConverter("PT1H30M", "java.time.Duration");
+
+		// A truly invalid value is still reported
+		assertValiateWithConverter("foo", "java.time.Duration", "Text cannot be parsed to a Duration");
+	}
+
 }
