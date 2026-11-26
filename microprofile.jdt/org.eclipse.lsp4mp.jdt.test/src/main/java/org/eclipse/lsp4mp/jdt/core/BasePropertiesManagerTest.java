@@ -226,11 +226,13 @@ public class BasePropertiesManagerTest {
 		createParentFolders(file);
 		file.refreshLocal(IResource.DEPTH_ZERO, null);
 		InputStream fileContents = new ByteArrayInputStream(contents.getBytes());
+
 		if (file.exists()) {
 			file.setContents(fileContents, IResource.NONE, null);
 		} else {
 			file.create(fileContents, true, null);
 		}
+		file.touch(null);
 	}
 
 	private static void createParentFolders(final IResource resource) throws CoreException {

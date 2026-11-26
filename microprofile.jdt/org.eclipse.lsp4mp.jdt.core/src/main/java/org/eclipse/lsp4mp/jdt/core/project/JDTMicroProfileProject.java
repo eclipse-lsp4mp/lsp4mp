@@ -58,7 +58,6 @@ public class JDTMicroProfileProject {
 	private List<IConfigSource> configSources;
 
 	private transient IConfigSourcePropertiesProvider aggregatedPropertiesProvider = null;
-	private transient PropertyValueExpander propertyValueExpander = null;
 
 	public JDTMicroProfileProject(IJavaProject javaProject) {
 		this.javaProject = javaProject;
@@ -68,7 +67,7 @@ public class JDTMicroProfileProject {
 	/**
 	 * Returns the value of this property or <code>defaultValue</code> if it is not
 	 * defined in this project.
-	 * 
+	 *
 	 * Expands property expressions when there are no cyclical references between
 	 * property values.
 	 *
@@ -89,9 +88,7 @@ public class JDTMicroProfileProject {
 		if (unresolved == null) {
 			return defaultValue;
 		} else if (unresolved.contains("${")) {
-			if (propertyValueExpander == null) {
-				propertyValueExpander = new PropertyValueExpander(aggregatedPropertiesProvider);
-			}
+			PropertyValueExpander propertyValueExpander = new PropertyValueExpander(aggregatedPropertiesProvider);
 			String expandedValue = propertyValueExpander.getValue(propertyKey);
 			if (expandedValue == null) {
 				return defaultValue;
@@ -105,7 +102,7 @@ public class JDTMicroProfileProject {
 	/**
 	 * Returns the value of this property or null if it is not defined in this
 	 * project.
-	 * 
+	 *
 	 * Expands property expressions when there are no cyclical references between
 	 * property values.
 	 *
@@ -121,10 +118,10 @@ public class JDTMicroProfileProject {
 	/**
 	 * Returns the value of this property as an int, or <code>defaultValue</code>
 	 * when there is no value or the value cannot be parsed as a String.
-	 * 
+	 *
 	 * Expands property expressions when there are no cyclical references between
 	 * property values.
-	 * 
+	 *
 	 * @param key          the property to get with the profile included, in the
 	 *                     format used by microprofile-config.properties
 	 * @param defaultValue the value to return if the value for the property is not
@@ -148,19 +145,19 @@ public class JDTMicroProfileProject {
 	/**
 	 * Returns a list of all values for properties and different profiles that are
 	 * defined in this project.
-	 * 
+	 *
 	 * <p>
 	 * This list contains information for the property (ex : greeting.message) and
 	 * profile property (ex : %dev.greeting.message).
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * When several properties file (ex : microprofile-config.properties,
 	 * application.properties, etc) define the same property, it's the file which
 	 * have the bigger ordinal (see {@link IConfigSource#getOrdinal()} which is
 	 * returned.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Expands property expressions for each of the values of the key when there are
 	 * no cyclical references between property values.
@@ -201,7 +198,7 @@ public class JDTMicroProfileProject {
 
 	/**
 	 * Returns the list of config sources.
-	 * 
+	 *
 	 * @return the list of config sources.
 	 */
 	public List<IConfigSource> getConfigSources() {
@@ -217,13 +214,12 @@ public class JDTMicroProfileProject {
 	 */
 	public void evictConfigSourcesCache() {
 		configSources = null;
-		propertyValueExpander = null;
 		aggregatedPropertiesProvider = null;
 	}
 
 	/**
 	 * Try updating the given config source file
-	 * 
+	 *
 	 * @param file
 	 * @return true if the config source file has been updated (ex:
 	 *         src/main/resources/microprofile-config.properties) and false
@@ -235,7 +231,6 @@ public class JDTMicroProfileProject {
 				// If file comes from target folder, the file will not be updated.
 				if (configSource.getSourceConfigFileURI().endsWith(file.getLocation().toString())) {
 					configSource.reset();
-					propertyValueExpander = null;
 					aggregatedPropertiesProvider = null;
 					return true;
 				}
@@ -247,7 +242,7 @@ public class JDTMicroProfileProject {
 	/**
 	 * Load config sources from the given project and sort it by using
 	 * {@link IConfigSource#getOrdinal()}
-	 * 
+	 *
 	 * @param javaProject the Java project
 	 * @return the loaded config sources.
 	 */
