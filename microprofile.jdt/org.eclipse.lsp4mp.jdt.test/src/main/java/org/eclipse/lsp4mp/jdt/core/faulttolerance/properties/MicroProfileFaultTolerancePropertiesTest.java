@@ -70,7 +70,7 @@ public class MicroProfileFaultTolerancePropertiesTest extends BasePropertiesMana
 
 				// <annotation>/<parameter>
 				p(null, "Bulkhead/value", "int",
-						"Specify the maximum number of concurrent calls to an instance. The value must be greater than 0. Otherwise, [org.eclipse.microprofile.faulttolerance.exceptions.FaultToleranceDefinitionException]() occurs."
+						"Specify the maximum number of concurrent calls to an instance. The value must be greater than 0. Otherwise, org.eclipse.microprofile.faulttolerance.exceptions.FaultToleranceDefinitionException occurs."
 								+ System.lineSeparator() + //
 								"" + System.lineSeparator() + //
 								"* **Returns:**" + System.lineSeparator() + //
