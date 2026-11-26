@@ -171,6 +171,30 @@ public class MicroProfileProjectRuntime implements TypeProvider {
 	}
 
 	/**
+	 * Returns {@code true} if the project classpath contains an entry whose name
+	 * contains the given {@code token} (typically an artifact file name).
+	 *
+	 * <p>
+	 * Only the classpath entry names are inspected; no class is loaded, so this can
+	 * safely be used in SAFE execution mode.
+	 * </p>
+	 *
+	 * @param token the substring to look for in the classpath entry names
+	 * @return {@code true} if a classpath entry contains the given token
+	 */
+	public boolean hasClasspathEntry(String token) {
+		if (classpath == null || token == null) {
+			return false;
+		}
+		for (String entry : classpath) {
+			if (entry != null && entry.contains(token)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Retrieves the Class corresponding to the given fully qualified name. Uses an
 	 * internal cache to avoid reloading the same class multiple times.
 	 *

@@ -71,4 +71,18 @@ public class LibertyProjectRuntimeInSafeModeTest extends AbstractMicroProfilePro
 		assertValiateWithConverter("FOOX", "org.acme.MyEnum");
 	}
 
+	/**
+	 * A project that does not use SmallRye Config (e.g. Open Liberty) keeps strict
+	 * ISO-8601 {@link java.time.Duration} validation: the relaxed Quarkus/SmallRye
+	 * format is not enabled.
+	 */
+	@Test
+	public void testDuration() {
+		// Strict ISO-8601 is valid
+		assertValiateWithConverter("PT1H30M", "java.time.Duration");
+
+		// The relaxed format is NOT accepted (no SmallRye Config on the classpath)
+		assertValiateWithConverter("60S", "java.time.Duration", "Text cannot be parsed to a Duration");
+	}
+
 }
