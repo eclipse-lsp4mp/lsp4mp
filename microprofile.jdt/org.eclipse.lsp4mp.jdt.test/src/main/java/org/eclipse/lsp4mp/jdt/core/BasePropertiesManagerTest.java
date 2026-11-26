@@ -218,7 +218,7 @@ public class BasePropertiesManagerTest {
 		return to;
 	}
 
-	private static void waitForBackgroundJobs(IProgressMonitor monitor) throws Exception {
+	private static void waitForBackgroundJobs(IProgressMonitor monitor) throws CoreException, InterruptedException {
 		JobHelpers.waitForJobsToComplete(monitor);
 	}
 
@@ -230,6 +230,11 @@ public class BasePropertiesManagerTest {
 			file.setContents(fileContents, IResource.NONE, null);
 		} else {
 			file.create(fileContents, true, null);
+		}
+		try {
+			waitForBackgroundJobs(new NullProgressMonitor());
+		} catch (InterruptedException e) {
+			// do nothing
 		}
 	}
 
